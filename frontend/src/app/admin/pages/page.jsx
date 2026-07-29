@@ -6,6 +6,7 @@ import {
 } from "react-icons/fi";
 import { getPages, getPage, updatePage } from "@/services/pages";
 import { useAdminAuth } from "@/context/AdminAuthContext";
+import { revalidateTags } from "@/lib/revalidate";
 
 const inputCls = "w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
 
@@ -54,7 +55,8 @@ export default function AdminPagesPage() {
                 isPublished: form.isPublished !== false,
             });
             if (res?.success) {
-                setMsg({ type: "success", text: "Page saved. Live in ~1 minute." });
+                revalidateTags([`page:${form.slug}`]);
+                setMsg({ type: "success", text: "Page saved. Live now." });
                 load();
             } else {
                 setMsg({ type: "error", text: res?.message || "Failed to save page" });

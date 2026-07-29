@@ -3,9 +3,12 @@ import { authFetch } from "@/services/api";
 import { useState, useEffect } from "react";
 import { FiPercent, FiEdit2, FiX, FiCheck } from "react-icons/fi";
 import { useCurrency } from "@/context/CurrencyContext.jsx";
+import { useAdminAuth } from "@/context/AdminAuthContext";
 
 export default function DiscountPage() {
     const { symbol } = useCurrency();
+    const { can } = useAdminAuth();
+    const canWrite = can("discount:write");
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editingProduct, setEditingProduct] = useState(null);
@@ -151,13 +154,15 @@ export default function DiscountPage() {
                                             )}
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => openDiscountModal(product, index)}
-                                        className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                                        title="Edit discount"
-                                    >
-                                        <FiEdit2 className="w-4 h-4" />
-                                    </button>
+                                    {canWrite && (
+                                        <button
+                                            onClick={() => openDiscountModal(product, index)}
+                                            className="p-2 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                            title="Edit discount"
+                                        >
+                                            <FiEdit2 className="w-4 h-4" />
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -174,7 +179,7 @@ export default function DiscountPage() {
             {editingProduct && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/50" onClick={closeModal} />
-                    <div className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                    <div className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-6">
                             <h4 className="text-xl font-bold text-gray-800">Edit Discount</h4>
                             <button onClick={closeModal} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">

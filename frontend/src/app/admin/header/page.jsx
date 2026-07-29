@@ -2,8 +2,12 @@
 import { authFetch } from "@/services/api";
 import React, { useState, useEffect } from "react";
 import { FiUploadCloud, FiTrash2, FiLink } from "react-icons/fi";
+import { useAdminAuth } from "@/context/AdminAuthContext";
 
 export default function CreateHeaderPage() {
+    const { can } = useAdminAuth();
+    const canWrite = can("header:write");
+    const canDelete = can("header:delete");
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const [headers, setHeaders] = useState([]);
@@ -93,24 +97,26 @@ export default function CreateHeaderPage() {
             )}
 
             {/* Upload Form */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
-                <h4 className="text-lg font-semibold text-gray-800 mb-4">Upload New Header</h4>
-                <form onSubmit={handleHeaderSubmit} className="flex flex-col gap-5">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Redirect URL (Optional)</label>
-                        <input type="text" name="url" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-gray-700" placeholder="e.g. /products/winter-sale" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Banner Image (Desktop/Mobile Banner)</label>
-                        <div className="border border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 text-center hover:bg-gray-100 transition cursor-pointer">
-                            <input type="file" name="header_image" required accept="image/*" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+            {canWrite && (
+                <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+                    <h4 className="text-lg font-semibold text-gray-800 mb-4">Upload New Header</h4>
+                    <form onSubmit={handleHeaderSubmit} className="flex flex-col gap-5">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Redirect URL (Optional)</label>
+                            <input type="text" name="url" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-gray-700" placeholder="e.g. /products/winter-sale" />
                         </div>
-                    </div>
-                    <button type="submit" disabled={loading} className="flex items-center justify-center gap-2 w-full bg-emerald-600 text-white font-medium py-3 rounded-lg shadow hover:bg-emerald-700 disabled:opacity-70 transition">
-                        <FiUploadCloud className="w-5 h-5" /> {loading ? "Uploading..." : "Upload Header"}
-                    </button>
-                </form>
-            </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Banner Image (Desktop/Mobile Banner)</label>
+                            <div className="border border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 text-center hover:bg-gray-100 transition cursor-pointer">
+                                <input type="file" name="header_image" required accept="image/*" className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+                            </div>
+                        </div>
+                        <button type="submit" disabled={loading} className="flex items-center justify-center gap-2 w-full bg-emerald-600 text-white font-medium py-3 rounded-lg shadow hover:bg-emerald-700 disabled:opacity-70 transition">
+                            <FiUploadCloud className="w-5 h-5" /> {loading ? "Uploading..." : "Upload Header"}
+                        </button>
+                    </form>
+                </div>
+            )}
 
             {/* Header Images List */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -146,13 +152,15 @@ export default function CreateHeaderPage() {
                                         <span className="text-xs text-gray-500">
                                             {new Date(header.createdAt).toLocaleDateString()}
                                         </span>
-                                        <button
-                                            onClick={() => handleDelete(header._id)}
-                                            className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition text-sm"
-                                        >
-                                            <FiTrash2 className="w-4 h-4" />
-                                            Delete
-                                        </button>
+                                        {canDelete && (
+                                            <button
+                                                onClick={() => handleDelete(header._id)}
+                                                className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition text-sm"
+                                            >
+                                                <FiTrash2 className="w-4 h-4" />
+                                                Delete
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>

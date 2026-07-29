@@ -96,7 +96,7 @@ const apiLimiter = rateLimit({
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 20,
+    max: env.AUTH_RATE_LIMIT_MAX,
     standardHeaders: true,
     legacyHeaders: false,
     message: { success: false, message: 'Too many auth attempts, please try again later.' },
@@ -155,6 +155,7 @@ app.use('/api/admin/site-settings', requireAuth, siteSettingsRouter.admin);
 app.use('/api/admin/footer', requireAuth, footerRouter.admin);
 app.use('/api/admin/page', requireAuth, pageRouter.admin);
 app.use('/api/admin/nav-menu', requireAuth, navMenuRouter.admin);
+app.use('/api/admin/contact', requireAuth, contactMessageRouter.admin);
 
 // Public/client routes
 app.use('/api/client/auth', clientAuthRouter);
@@ -165,7 +166,7 @@ app.use('/api/client/wishlist', clientWishlistRouter);
 app.use('/api/client/order', clientOrderRouter);
 app.use('/api/client/payment', clientPaymentRouter);
 app.use('/api/client/checkout', clientCheckoutRouter);
-app.use('/api/client/contact', contactMessageRouter);
+app.use('/api/client/contact', contactMessageRouter.client);
 app.use('/api/client/review', clientReviewRouter);
 app.use('/api/client/category', clientCategoryRouter);
 app.use('/api/client/coupon', couponRouter.client);

@@ -38,7 +38,9 @@ const FALLBACK_SETTINGS = {
     siteName: "Ab9dEcommerce",
     description:
         "Ab9dEcommerce is an e-commerce platform dedicated to delivering quality and reliable products to every home.",
-    logoUrl: "/logo.png",
+    // Blank on purpose: show the admin-configured logo when set, otherwise
+    // render no logo at all rather than a leftover brand's placeholder image.
+    logoUrl: "",
     contactEmail: "",
     contactPhone: "",
     contactAddress: "[Your Business Address]",
@@ -135,15 +137,17 @@ export default function Footer() {
                     <div className="grid grid-cols-2 md:grid-cols-12 gap-8 md:gap-10">
                         {/* Left — brand block */}
                         <div className="col-span-2 md:col-span-5">
-                            <div className="mb-4 inline-flex items-center justify-center bg-white/95 rounded-full shadow-lg ring-4 ring-amber-400 w-36 h-36 sm:w-40 sm:h-40">
-                                <Image
-                                    src={settings.logoUrl || "/logo.png"}
-                                    alt={`${settings.siteName} Logo`}
-                                    width={220}
-                                    height={70}
-                                    className="object-contain w-28 sm:w-32 h-auto"
-                                />
-                            </div>
+                            {settings.logoUrl && (
+                                <div className="mb-4 inline-flex items-center justify-center bg-white/95 rounded-full shadow-lg ring-4 ring-amber-400 w-36 h-36 sm:w-40 sm:h-40">
+                                    <Image
+                                        src={settings.logoUrl}
+                                        alt={`${settings.siteName} Logo`}
+                                        width={220}
+                                        height={70}
+                                        className="object-contain w-28 sm:w-32 h-auto"
+                                    />
+                                </div>
+                            )}
                             <p className="text-emerald-100/90 leading-relaxed mb-6 max-w-md">
                                 {settings.description || FALLBACK_SETTINGS.description}
                             </p>
@@ -281,7 +285,7 @@ export default function Footer() {
                                 `© ${new Date().getFullYear()} ${settings.siteName}. All rights reserved.`}
                         </p>
                         <p className="font-medium">
-                            Crafted with care · <span className="text-amber-300">Developed by Abdullah AL Fuad</span>
+                            Crafted with care · <span className="text-amber-300">Developed by Tohas Protrade</span>
                         </p>
                     </div>
                 </div>

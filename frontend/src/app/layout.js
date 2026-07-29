@@ -1,9 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar.jsx";
-import HeaderTop from "@/components/Header-top.jsx";
-import Footer from "@/components/Footer.jsx";
-import OrderChatbot from "@/components/OrderChatbot.jsx";
+import AppChrome from "@/components/AppChrome.jsx";
 import PwaRegister from "@/components/PwaRegister.jsx";
 import Analytics from "@/components/Analytics.jsx";
 import JsonLd from "@/components/JsonLd.jsx";
@@ -146,13 +143,7 @@ export default async function RootLayout({ children }) {
         ))}
         <CurrencyProvider initialSymbol={currencySymbol} initialCode={currencyCode}>
           <CustomerAuthProvider>
-            <HeaderTop />
-            <Navbar />
-            <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              {children}
-            </main>
-            <Footer />
-            <OrderChatbot />
+            <AppChrome>{children}</AppChrome>
             <PwaRegister enabled={pwaEnabled} />
           </CustomerAuthProvider>
         </CurrencyProvider>

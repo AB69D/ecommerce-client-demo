@@ -141,7 +141,7 @@ export const updateOrderStatusController = async (request, response) => {
 
 export const getAllOrdersController = async (request, response) => {
     try {
-        let { page, limit, search, status, source, soldById } = request.body;
+        let { page, limit, search, status, source, soldById, dateFrom, dateTo } = request.body;
 
         if (!page) page = 1;
         if (!limit) limit = 20;
@@ -170,12 +170,36 @@ export const getAllOrdersController = async (request, response) => {
             query['soldBy.id'] = soldById;
         }
 
+        if (dateFrom || dateTo) {
+            query.createdAt = {};
+            if (dateFrom) query.createdAt.$gte = new Date(dateFrom);
+            if (dateTo) {
+                const end = new Date(dateTo);
+                end.setHours(23, 59, 59, 999);
+                query.createdAt.$lte = end;
+            }
+        }
+
         const skip = (page - 1) * limit;
 
-        const [data, totalCount] = await Promise.all([
+        // Status breakdown for the stat cards must reflect every matching
+        // order, not just the current page — so it's a separate aggregate
+        // over the same filters minus the status filter itself (otherwise
+        // picking one status would zero out all the others).
+        const { orderStatus: _omit, ...queryWithoutStatus } = query;
+
+        const [data, totalCount, statusCountsAgg] = await Promise.all([
             OrderModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
-            OrderModel.countDocuments(query)
+            OrderModel.countDocuments(query),
+            OrderModel.aggregate([
+                { $match: queryWithoutStatus },
+                { $group: { _id: '$orderStatus', count: { $sum: 1 } } },
+            ]),
         ]);
+        const statusCounts = statusCountsAgg.reduce((acc, { _id, count }) => {
+            acc[_id] = count;
+            return acc;
+        }, {});
 
         return response.json({
             message: "Orders fetched successfully",
@@ -183,6 +207,7 @@ export const getAllOrdersController = async (request, response) => {
             success: true,
             totalCount: totalCount,
             totalNoPage: Math.ceil(totalCount / limit),
+            statusCounts,
             data: data
         });
 

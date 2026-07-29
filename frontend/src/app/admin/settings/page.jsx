@@ -10,6 +10,7 @@ import { getSiteSettings, updateSiteSettings, uploadSiteImage } from "@/services
 import { getFooterSettings, updateFooterSettings } from "@/services/footer";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { SITE_PAGES, PAGE_BY_PATH } from "@/lib/sitePages";
+import { revalidateTags } from "@/lib/revalidate";
 
 const TABS = [
     { id: "branding", label: "Branding", icon: <FiType className="w-4 h-4" /> },
@@ -339,6 +340,9 @@ export default function SettingsPage() {
             if (r1?.success && r2?.success) {
                 if (r1.data) setSettings(r1.data);
                 if (r2.data) setFooter(r2.data);
+                // Bust the storefront's cached fetch instead of it waiting out
+                // the 60s ISR window (see lib/dynamicContent.js).
+                revalidateTags(["site-settings", "footer"]);
                 setMsg({ type: "success", text: "Settings saved successfully" });
                 // Broadcast the (possibly new) currency so every surface in this tab
                 // — admin tables, POS, storefront — re-renders the symbol live,
@@ -404,14 +408,20 @@ export default function SettingsPage() {
                 </div>
             )}
 
-            {/* Tabs */}
-            <div className="flex gap-1 overflow-x-auto mb-5 border-b border-gray-100 -mx-1 px-1">
-                {TABS.map((t) => (
-                    <button key={t.id} onClick={() => setTab(t.id)}
-                        className={`flex items-center gap-2 px-3.5 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${tab === t.id ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500 hover:text-gray-700"}`}>
-                        {t.icon} {t.label}
-                    </button>
-                ))}
+            {/* Tabs — the strip scrolls horizontally once it's wider than the
+                panel; the edge fades hint that there's more without needing
+                JS scroll tracking. */}
+            <div className="relative mb-5 -mx-1">
+                <div className="flex gap-1 overflow-x-auto border-b border-gray-100 px-1">
+                    {TABS.map((t) => (
+                        <button key={t.id} onClick={() => setTab(t.id)}
+                            className={`flex items-center gap-2 px-3.5 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${tab === t.id ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-500 hover:text-gray-700"}`}>
+                            {t.icon} {t.label}
+                        </button>
+                    ))}
+                </div>
+                <div className="pointer-events-none absolute top-0 bottom-2 left-0 w-6 bg-gradient-to-r from-white to-transparent" />
+                <div className="pointer-events-none absolute top-0 bottom-2 right-0 w-6 bg-gradient-to-l from-white to-transparent" />
             </div>
 
             <fieldset disabled={!editable} className="space-y-5">
@@ -578,7 +588,7 @@ export default function SettingsPage() {
                             </select>
                         </Field>
                         {showCustomCurrency && (
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Field label="Currency code" hint="3 letters, e.g. USD">
                                     <input maxLength={3} className={`${inputCls} uppercase`} value={settings.currencyCode || ""} onChange={(e) => setS({ currencyCode: e.target.value.toUpperCase() })} />
                                 </Field>
@@ -628,7 +638,7 @@ export default function SettingsPage() {
                             <Field label="Return policy" hint="Optional small print under the footer note.">
                                 <textarea rows={2} className={inputCls} value={settings.receipt?.returnPolicy || ""} onChange={(e) => setReceipt({ returnPolicy: e.target.value })} />
                             </Field>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Field label="Paper width">
                                     <select className={inputCls} value={settings.receipt?.paperWidth === "58" ? "58" : "80"} onChange={(e) => setReceipt({ paperWidth: e.target.value })}>
                                         <option value="80">80 mm</option>
@@ -642,7 +652,7 @@ export default function SettingsPage() {
 
                         <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 space-y-3">
                             <h3 className="text-sm font-semibold text-gray-700">POS behaviour</h3>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Field label="Low-stock threshold" hint="Warn when stock drops to this level.">
                                     <input type="number" min="0" className={inputCls} value={settings.pos?.lowStockThreshold ?? 5} onChange={(e) => setPos({ lowStockThreshold: e.target.value })} />
                                 </Field>
@@ -650,7 +660,7 @@ export default function SettingsPage() {
                                     <input type="number" min="0" max="100" step="0.01" className={inputCls} value={settings.pos?.taxPercent ?? 0} onChange={(e) => setPos({ taxPercent: e.target.value })} />
                                 </Field>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Field label="Tax label" hint="e.g. VAT, GST, Sales Tax.">
                                     <input className={inputCls} value={settings.pos?.taxLabel || ""} onChange={(e) => setPos({ taxLabel: e.target.value })} />
                                 </Field>
@@ -666,7 +676,7 @@ export default function SettingsPage() {
 
                 {tab === "barcode" && (
                     <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <Field label="Symbology" hint="Barcode format used on labels.">
                                 <select className={inputCls} value={settings.barcode?.symbology === "EAN13" ? "EAN13" : "CODE128"} onChange={(e) => setBarcodeCfg({ symbology: e.target.value })}>
                                     <option value="CODE128">CODE128</option>
@@ -677,7 +687,7 @@ export default function SettingsPage() {
                                 <input className={inputCls} value={settings.barcode?.prefix || ""} onChange={(e) => setBarcodeCfg({ prefix: e.target.value })} />
                             </Field>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <Field label="Label width (mm)">
                                 <input type="number" min="10" max="200" className={inputCls} value={settings.barcode?.labelWidthMm ?? 40} onChange={(e) => setBarcodeCfg({ labelWidthMm: e.target.value })} />
                             </Field>

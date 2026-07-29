@@ -35,6 +35,10 @@ const schema = z.object({
 
     RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(15 * 60 * 1000),
     RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
+    // Auth attempts are IP-scoped, so a shared office/NAT can exhaust this
+    // across everyone behind it. Configurable so a deployment behind a busy
+    // shared IP can raise it without a code change.
+    AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(60),
 });
 
 const parsed = schema.safeParse(process.env);

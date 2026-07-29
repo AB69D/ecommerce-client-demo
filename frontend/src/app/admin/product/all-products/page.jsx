@@ -209,6 +209,9 @@ export default function AllProductsPage() {
                 <div className="text-center py-20 text-gray-500">No products found</div>
             ) : (
                 <>
+                    <p className="sm:hidden px-4 py-2 text-xs text-gray-400 bg-gray-50 border border-b-0 border-gray-200 rounded-t-xl">
+                        Swipe left/right to see all columns →
+                    </p>
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>

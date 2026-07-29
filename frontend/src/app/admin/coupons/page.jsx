@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { FiPlus, FiEdit2, FiTrash2, FiX, FiTag, FiSearch, FiPercent, FiDollarSign } from "react-icons/fi";
 import { listCoupons, createCoupon, updateCoupon, deleteCoupon } from "@/services/coupons";
 import { getSiteSettings } from "@/services/siteSettings";
+import { useAdminAuth } from "@/context/AdminAuthContext";
 
 const BLANK = {
     code: "",
@@ -22,6 +23,9 @@ const BLANK = {
 const toDateInput = (v) => (v ? new Date(v).toISOString().slice(0, 10) : "");
 
 export default function CouponsPage() {
+    const { can } = useAdminAuth();
+    const canWrite = can("discount:write");
+    const canDelete = can("discount:delete");
     const [coupons, setCoupons] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -158,9 +162,11 @@ export default function CouponsPage() {
                     </h1>
                     <p className="text-sm text-gray-500 mt-1">Cart-level discount codes for the storefront and POS.</p>
                 </div>
-                <button onClick={openCreate} className="px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2">
-                    <FiPlus className="w-4 h-4" /> New coupon
-                </button>
+                {canWrite && (
+                    <button onClick={openCreate} className="px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2">
+                        <FiPlus className="w-4 h-4" /> New coupon
+                    </button>
+                )}
             </div>
 
             {message && <div className="mb-4 px-4 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 text-sm">{message}</div>}
@@ -215,8 +221,12 @@ export default function CouponsPage() {
                                         <td className="py-2.5 px-3"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${st.cls}`}>{st.label}</span></td>
                                         <td className="py-2.5 px-3">
                                             <div className="flex items-center justify-end gap-1">
-                                                <button onClick={() => openEdit(c)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"><FiEdit2 className="w-4 h-4" /></button>
-                                                <button onClick={() => setConfirmDelete(c)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><FiTrash2 className="w-4 h-4" /></button>
+                                                {canWrite && (
+                                                    <button onClick={() => openEdit(c)} className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"><FiEdit2 className="w-4 h-4" /></button>
+                                                )}
+                                                {canDelete && (
+                                                    <button onClick={() => setConfirmDelete(c)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><FiTrash2 className="w-4 h-4" /></button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -239,7 +249,7 @@ export default function CouponsPage() {
                         <div className="p-5 overflow-y-auto space-y-4">
                             {error && <div className="px-3 py-2 rounded-lg bg-red-50 text-red-600 text-sm">{error}</div>}
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">Code</label>
                                     <input value={modal.form.code} onChange={(e) => setField("code", e.target.value.toUpperCase())} placeholder="SAVE10" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono uppercase focus:ring-2 focus:ring-indigo-500 outline-none" />
@@ -258,7 +268,7 @@ export default function CouponsPage() {
                                 <input value={modal.form.description} onChange={(e) => setField("description", e.target.value)} placeholder="Spring sale" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">{modal.form.type === "percent" ? "Percent off" : "Amount off"}</label>
                                     <input type="number" min={0} value={modal.form.value} onChange={(e) => setField("value", e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
@@ -271,7 +281,7 @@ export default function CouponsPage() {
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">Min spend ({symbol}, 0 = none)</label>
                                     <input type="number" min={0} value={modal.form.minSubtotal} onChange={(e) => setField("minSubtotal", e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
@@ -282,7 +292,7 @@ export default function CouponsPage() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">Starts (optional)</label>
                                     <input type="date" value={modal.form.startsAt} onChange={(e) => setField("startsAt", e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />

@@ -3,6 +3,7 @@ import { authFetch } from "@/services/api";
 import { useState, useEffect } from "react";
 import { FiStar, FiTrash2, FiMessageSquare, FiAlertCircle } from "react-icons/fi";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
+import { useAdminAuth } from "@/context/AdminAuthContext";
 
 const renderStars = (rating) => {
     const stars = [];
@@ -17,6 +18,8 @@ const renderStars = (rating) => {
 };
 
 export default function AdminReviewsPage() {
+    const { can } = useAdminAuth();
+    const canDelete = can("review:delete");
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -117,13 +120,15 @@ export default function AdminReviewsPage() {
                                         </div>
                                     )}
                                 </div>
-                                <button
-                                    onClick={() => handleDelete(review._id)}
-                                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
-                                    title="Delete review"
-                                >
-                                    <FiTrash2 className="w-4 h-4" />
-                                </button>
+                                {canDelete && (
+                                    <button
+                                        onClick={() => handleDelete(review._id)}
+                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                                        title="Delete review"
+                                    >
+                                        <FiTrash2 className="w-4 h-4" />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}

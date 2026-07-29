@@ -248,23 +248,30 @@ function Navbar() {
                             a skeleton holds the space until the real logo has decoded. */}
                         <div className="flex-shrink-0 px-2 sm:px-4">
                             <Link href="/" className="flex items-center" aria-label={`${branding.siteName} home`}>
-                                <div className="relative h-9 w-28 sm:h-11 sm:w-40 lg:h-12 lg:w-48">
-                                    {(!brandingLoaded || !logoReady) && (
+                                <div className="relative h-9 w-28 sm:h-11 sm:w-40 lg:h-12 lg:w-48 flex items-center">
+                                    {(!brandingLoaded || (branding.logoUrl && !logoReady)) && (
                                         <div className="absolute inset-0 rounded-lg bg-white/20 animate-pulse" />
                                     )}
-                                    {brandingLoaded && (
+                                    {brandingLoaded && branding.logoUrl && (
                                         <Image
-                                            key={branding.logoUrl || "default"}
-                                            src={branding.logoUrl || "/logo.png"}
+                                            key={branding.logoUrl}
+                                            src={branding.logoUrl}
                                             alt={`${branding.siteName} Logo`}
                                             fill
                                             sizes="(max-width: 640px) 112px, (max-width: 1024px) 160px, 192px"
                                             className={`object-contain object-center transition-opacity duration-300 [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.25))] ${logoReady ? "opacity-100" : "opacity-0"}`}
                                             priority
-                                            unoptimized={!!branding.logoUrl}
+                                            unoptimized
                                             onLoad={() => setLogoReady(true)}
                                             onError={() => setLogoReady(true)}
                                         />
+                                    )}
+                                    {/* No logo configured in the admin panel — show the site name
+                                        instead of falling back to a leftover brand's placeholder. */}
+                                    {brandingLoaded && !branding.logoUrl && (
+                                        <span className="text-lg sm:text-xl font-bold text-white truncate [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.25))]">
+                                            {branding.siteName}
+                                        </span>
                                     )}
                                 </div>
                             </Link>
@@ -400,16 +407,20 @@ function Navbar() {
                                     onClick={closeMobileMenu}
                                     className="inline-block bg-white rounded-xl px-3 py-2 shadow-md"
                                 >
-                                    <div className="w-[110px]">
-                                        <Image
-                                            src={branding.logoUrl || "/logo.png"}
-                                            alt={`${branding.siteName} Logo`}
-                                            width={220}
-                                            height={70}
-                                            className="object-contain w-full h-auto"
-                                            unoptimized={!!branding.logoUrl}
-                                        />
-                                    </div>
+                                    {branding.logoUrl ? (
+                                        <div className="w-[110px]">
+                                            <Image
+                                                src={branding.logoUrl}
+                                                alt={`${branding.siteName} Logo`}
+                                                width={220}
+                                                height={70}
+                                                className="object-contain w-full h-auto"
+                                                unoptimized
+                                            />
+                                        </div>
+                                    ) : (
+                                        <span className="font-bold text-emerald-800">{branding.siteName}</span>
+                                    )}
                                 </Link>
                                 <button
                                     onClick={closeMobileMenu}

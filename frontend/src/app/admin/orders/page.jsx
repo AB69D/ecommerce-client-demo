@@ -27,10 +27,28 @@ export default function AdminOrdersPage() {
     const [confirmModal, setConfirmModal] = useState({ show: false, order: null, deliveryDate: "", adminNotes: "" });
     const [processing, setProcessing] = useState(false);
     const [stats, setStats] = useState({ total: 0, pending: 0, confirmed: 0, delivered: 0, cancelled: 0 });
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const PAGE_SIZE = 20;
+
+    // Debounce the free-text search so it doesn't re-query on every keystroke;
+    // everything else (status/source/date/page) re-fetches immediately.
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(search), 350);
+        return () => clearTimeout(t);
+    }, [search]);
+
+    // Any filter change should jump back to page 1 — staying on, say, page 4
+    // of a now-narrower result set would just show an empty page.
+    useEffect(() => {
+        setPage(1);
+    }, [statusFilter, sourceFilter, soldByFilter, debouncedSearch, dateFrom, dateTo]);
 
     useEffect(() => {
         fetchOrders();
-    }, [statusFilter, sourceFilter, soldByFilter]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [statusFilter, sourceFilter, soldByFilter, debouncedSearch, dateFrom, dateTo, page]);
 
     // Load POS sellers once for the salesman filter. Silently no-op if the
     // viewer lacks user:read — the filter simply stays empty.
@@ -51,9 +69,14 @@ export default function AdminOrdersPage() {
         setLoading(true);
         try {
             const body = {
+                page,
+                limit: PAGE_SIZE,
+                search: debouncedSearch || undefined,
                 status: statusFilter !== "all" ? statusFilter : undefined,
                 source: sourceFilter !== "all" ? sourceFilter : undefined,
                 soldById: soldByFilter !== "all" ? soldByFilter : undefined,
+                dateFrom: dateFrom || undefined,
+                dateTo: dateTo || undefined,
             };
             const res = await authFetch(`/api/admin/order/get-all`, {
                 method: 'POST',
@@ -63,15 +86,17 @@ export default function AdminOrdersPage() {
             const data = await res.json();
             if (data.success) {
                 setOrders(data.data);
-                
-                // Calculate stats
-                const allData = data.data;
+                setTotalPages(data.totalNoPage || 1);
+
+                // Status breakdown is an aggregate over ALL matching orders
+                // (server-computed), not just this page.
+                const sc = data.statusCounts || {};
                 setStats({
-                    total: allData.length,
-                    pending: allData.filter(o => o.orderStatus === 'pending').length,
-                    confirmed: allData.filter(o => o.orderStatus === 'confirmed').length,
-                    delivered: allData.filter(o => o.orderStatus === 'delivered').length,
-                    cancelled: allData.filter(o => o.orderStatus === 'cancelled').length
+                    total: data.totalCount || 0,
+                    pending: sc.pending || 0,
+                    confirmed: sc.confirmed || 0,
+                    delivered: sc.delivered || 0,
+                    cancelled: sc.cancelled || 0,
                 });
             }
         } catch (error) {
@@ -150,21 +175,10 @@ export default function AdminOrdersPage() {
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     };
 
-    const filteredOrders = orders.filter(order => {
-        const matchesSearch = !search ||
-            order.orderId?.toLowerCase().includes(search.toLowerCase()) ||
-            order.customerName?.toLowerCase().includes(search.toLowerCase()) ||
-            order.customerPhone?.includes(search);
-
-        let matchesDate = true;
-        if ((dateFrom || dateTo) && order.createdAt) {
-            const orderDate = toLocalYMD(order.createdAt);
-            if (dateFrom && orderDate < dateFrom) matchesDate = false;
-            if (dateTo && orderDate > dateTo) matchesDate = false;
-        }
-
-        return matchesSearch && matchesDate;
-    });
+    // Search/status/source/date filters are now all applied server-side (see
+    // fetchOrders) so pagination stays correct; `orders` is already exactly
+    // this page's matching results.
+    const filteredOrders = orders;
 
     const todayYMD = () => {
         const d = new Date();
@@ -238,7 +252,7 @@ export default function AdminOrdersPage() {
     return (
         <div className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4">
                 <div className="bg-white p-4 rounded-xl border border-gray-200">
                     <p className="text-sm text-gray-500">Total Orders</p>
                     <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
@@ -378,7 +392,7 @@ export default function AdminOrdersPage() {
                     </div>
                     {(dateFrom || dateTo) && (
                         <span className="text-xs text-gray-500 sm:ml-auto whitespace-nowrap">
-                            {filteredOrders.length} order{filteredOrders.length === 1 ? '' : 's'} in range
+                            {stats.total} order{stats.total === 1 ? '' : 's'} in range
                         </span>
                     )}
                 </div>
@@ -396,6 +410,9 @@ export default function AdminOrdersPage() {
                 </div>
             ) : (
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <p className="sm:hidden px-4 py-2 text-xs text-gray-400 bg-gray-50 border-b border-gray-100">
+                        Swipe left/right to see all columns →
+                    </p>
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b border-gray-200">
@@ -461,6 +478,32 @@ export default function AdminOrdersPage() {
                             </tbody>
                         </table>
                     </div>
+
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-gray-100">
+                            <p className="text-xs text-gray-500">
+                                Page {page} of {totalPages} · {stats.total} total
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                    disabled={page <= 1}
+                                    className="px-3 py-1.5 text-sm font-medium border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    Previous
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                                    disabled={page >= totalPages}
+                                    className="px-3 py-1.5 text-sm font-medium border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 

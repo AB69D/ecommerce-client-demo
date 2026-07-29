@@ -3,7 +3,7 @@
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
-const fetchJson = async (path) => {
+const fetchJson = async (path, tags) => {
     // On the server (SSR / static export) a relative URL has no host to resolve
     // against and the prerender hangs, so target the absolute backend URL. In the
     // browser keep the relative path so the Next.js rewrite proxy handles it.
@@ -11,7 +11,10 @@ const fetchJson = async (path) => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 5000);
     try {
-        const res = await fetch(url, { next: { revalidate: 60 }, signal: controller.signal });
+        // `tags` lets the admin panel bust exactly this cache entry on save via
+        // revalidateTag() instead of waiting out the 60s window (see
+        // app/api/revalidate/route.js).
+        const res = await fetch(url, { next: { revalidate: 60, tags }, signal: controller.signal });
         if (!res.ok) return null;
         const json = await res.json();
         return json?.data ?? null;
@@ -22,11 +25,14 @@ const fetchJson = async (path) => {
     }
 };
 
-export const fetchSiteSettings = () => fetchJson('/api/client/site-settings');
-export const fetchFooter = () => fetchJson('/api/client/footer');
+export const fetchSiteSettings = () => fetchJson('/api/client/site-settings', ['site-settings']);
+export const fetchFooter = () => fetchJson('/api/client/footer', ['footer']);
 export const fetchNavMenu = (location) =>
-    fetchJson(location ? `/api/client/nav-menu?location=${location}` : '/api/client/nav-menu');
+    fetchJson(
+        location ? `/api/client/nav-menu?location=${location}` : '/api/client/nav-menu',
+        ['nav-menu'],
+    );
 
 // Admin-overridable content for a fixed page (returns null when no override has
 // been saved, so the route renders its built-in default content).
-export const fetchPage = (slug) => fetchJson(`/api/client/page/${slug}`);
+export const fetchPage = (slug) => fetchJson(`/api/client/page/${slug}`, [`page:${slug}`]);

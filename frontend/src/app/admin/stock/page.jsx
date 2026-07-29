@@ -214,7 +214,7 @@ export default function StockManagementPage() {
 
             {adjustModal.show && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+                    <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
                         <h3 className="text-lg font-semibold text-gray-800 mb-4">Adjust Stock</h3>
                         {adjustModal.product && (
                             <div className="mb-4 p-3 bg-gray-50 rounded-lg">

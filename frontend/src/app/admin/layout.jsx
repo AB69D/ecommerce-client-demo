@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
     FiGrid, FiPackage, FiLayout, FiList, FiTruck, FiMenu, FiX, FiSettings,
     FiHome, FiPercent, FiStar, FiLogOut, FiUsers, FiShield, FiFileText, FiUser,
-    FiShoppingBag, FiTag, FiBarChart2,
+    FiShoppingBag, FiTag, FiBarChart2, FiMail,
 } from "react-icons/fi";
 import { isAuthenticated, logout, fetchMe } from "@/services/adminAuth";
 import { AdminAuthContext, buildCan } from "@/context/AdminAuthContext";
@@ -108,6 +108,7 @@ export default function AdminLayout({ children }) {
                 { name: 'Headers', path: '/admin/header', icon: <FiLayout className="w-5 h-5" />, perms: ['header:read'] },
                 { name: 'Reviews', path: '/admin/reviews', icon: <FiStar className="w-5 h-5" />, perms: ['review:read'] },
                 { name: 'Pages', path: '/admin/pages', icon: <FiFileText className="w-5 h-5" />, perms: ['content:read'] },
+                { name: 'Messages', path: '/admin/messages', icon: <FiMail className="w-5 h-5" />, perms: ['content:read'] },
                 { name: 'Site Settings', path: '/admin/settings', icon: <FiSettings className="w-5 h-5" />, perms: ['content:read'] },
             ],
         },
@@ -227,7 +228,7 @@ export default function AdminLayout({ children }) {
                     </div>
                 </div>
 
-                <div className="flex-1 min-h-screen p-4 lg:p-6 overflow-y-auto lg:ml-0">
+                <div className="flex-1 min-w-0 min-h-screen p-4 lg:p-6 overflow-y-auto lg:ml-0">
                     <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8">
                         {children}
                     </div>
