@@ -2,7 +2,9 @@
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
 const nextConfig = {
-  output: 'standalone',
+  // Docker/VPS deploys need 'standalone'; Vercel's own build output tracing
+  // breaks (404s on every route) if this is set, so skip it there.
+  output: process.env.VERCEL ? undefined : 'standalone',
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
