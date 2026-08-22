@@ -8,6 +8,21 @@ import { evaluateCoupon } from '../lib/coupon.js';
 import { recordStockMovements } from '../lib/stockLedger.js';
 import { sendOrderConfirmationEmail } from '../lib/orderEmail.js';
 import { optionalCustomer } from '../middlewares/clientAuth.middleware.js';
+import { screenCheckout, normalizePhoneBD } from '../lib/blocklist.js';
+import { scoreCheckoutRisk } from '../lib/fraudScore.js';
+import { checkCourierRatio, evaluateCourierRatio } from '../lib/courierRatio.js';
+import { getSettings } from '../lib/siteSettings.js';
+
+// Merges a new risk signal into req.riskFlag, combining reasons/sources with
+// whatever a prior check (blocklist, in-house scorer, courier ratio) already
+// set — so a checkout can be flagged for more than one reason at once
+// without one signal's message overwriting another's.
+const addRiskSignal = (req, signal) => {
+    if (!signal) return;
+    req.riskFlag = req.riskFlag
+        ? { ...req.riskFlag, reason: `${req.riskFlag.reason}; ${signal.reason}`, source: `${req.riskFlag.source},${signal.source}` }
+        : { flagged: true, reason: signal.reason, source: signal.source, flaggedAt: new Date() };
+};
 
 const clientOrderRouter = Router();
 
@@ -15,7 +30,7 @@ const getGuestId = (req) => {
     return req.headers['guest-id'] || null;
 };
 
-clientOrderRouter.post('/create', optionalCustomer, async (req, res) => {
+clientOrderRouter.post('/create', optionalCustomer, screenCheckout, async (req, res) => {
     try {
         const { 
             customerName, 
@@ -62,6 +77,24 @@ clientOrderRouter.post('/create', optionalCustomer, async (req, res) => {
                 error: true,
                 success: false
             });
+        }
+
+        // In-house fake-order risk check (order velocity + this store's own
+        // return-rate history for the phone) — a second, independent signal
+        // from the blocklist check screenCheckout already ran. Never rejects
+        // outright; only adds to req.riskFlag so the order still goes through,
+        // flagged for manual review.
+        addRiskSignal(req, await scoreCheckoutRisk({ phone: customerPhone, ip: req.ip }));
+
+        // Courier-ratio check (Fraud BD) — a third, independent signal. No-ops
+        // (returns null immediately) unless an admin has saved an API key in
+        // Settings > Integrations, and fails open on any error/timeout so a
+        // slow or down third party never blocks checkout.
+        const phoneE164 = normalizePhoneBD(customerPhone);
+        const courierResult = await checkCourierRatio(phoneE164);
+        if (courierResult) {
+            const settings = await getSettings();
+            addRiskSignal(req, evaluateCourierRatio(courierResult, settings.fraudRules));
         }
 
         // Idempotency: if the client supplied a key and we already created an
@@ -166,8 +199,10 @@ clientOrderRouter.post('/create', optionalCustomer, async (req, res) => {
         const orderDoc = {
             orderId,
             guestId,
+            ip: req.ip || '',
             customerName,
             customerPhone,
+            customerPhoneE164: normalizePhoneBD(customerPhone),
             customerEmail: customerEmail || '',
             shippingAddress,
             city: deliveryArea,
@@ -183,6 +218,10 @@ clientOrderRouter.post('/create', optionalCustomer, async (req, res) => {
         if (idempotencyKey) orderDoc.idempotencyKey = idempotencyKey;
         // Link the order to the signed-in customer (if any) for order history.
         if (req.customer) orderDoc.customerId = req.customer._id.toString();
+        // Set by screenCheckout when a soft blocklist match let this order
+        // through rather than rejecting it outright — surfaces it for review.
+        if (req.riskFlag) orderDoc.riskFlag = req.riskFlag;
+        if (courierResult) orderDoc.courierRatioCheck = courierResult;
 
         const order = new OrderModel(orderDoc);
         try {
@@ -339,17 +378,27 @@ clientOrderRouter.post('/track', async (req, res) => {
     }
 });
 
-clientOrderRouter.get('/:orderId', async (req, res) => {
+// Requires proof of ownership (the order's guest-id, or a signed-in customer's
+// own account) — a bare orderId is not enough. Without this, anyone who found
+// or guessed an orderId could read another customer's full name/phone/address.
+clientOrderRouter.get('/:orderId', optionalCustomer, async (req, res) => {
     try {
         const { orderId } = req.params;
-        let guestId = getGuestId(req);
+        const guestId = getGuestId(req);
 
-        const query = { orderId };
-        if (guestId) {
-            query.guestId = guestId;
+        const ownerMatch = [];
+        if (guestId) ownerMatch.push({ guestId });
+        if (req.customer?._id) ownerMatch.push({ customerId: req.customer._id });
+
+        if (!ownerMatch.length) {
+            return res.status(400).json({
+                message: "Guest ID required",
+                error: true,
+                success: false
+            });
         }
 
-        const order = await OrderModel.findOne(query);
+        const order = await OrderModel.findOne({ orderId, $or: ownerMatch });
 
         if (!order) {
             return res.status(404).json({
