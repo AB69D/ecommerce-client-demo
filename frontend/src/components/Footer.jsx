@@ -145,6 +145,7 @@ export default function Footer() {
                                         width={220}
                                         height={70}
                                         className="object-contain w-28 sm:w-32 h-auto"
+                                        unoptimized
                                     />
                                 </div>
                             )}
