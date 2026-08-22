@@ -1,8 +1,9 @@
 "use client";
 import { authFetch } from "@/services/api";
 import { listAdminUsers } from "@/services/adminUsers";
+import { bookCourier, syncCourierStatus } from "@/services/courier";
 import React, { useState, useEffect } from "react";
-import { FiSearch, FiEye, FiCheck, FiX, FiPackage, FiTruck, FiClock, FiChevronRight, FiDollarSign, FiCalendar, FiUser, FiMapPin, FiPhone, FiMail, FiShoppingBag, FiGlobe } from "react-icons/fi";
+import { FiSearch, FiEye, FiCheck, FiX, FiPackage, FiTruck, FiClock, FiChevronRight, FiDollarSign, FiCalendar, FiUser, FiMapPin, FiPhone, FiMail, FiShoppingBag, FiGlobe, FiAlertTriangle, FiRefreshCw } from "react-icons/fi";
 import { PiWhatsappLogoBold } from "react-icons/pi";
 import { useWhatsApp } from "@/hooks/useWhatsApp";
 import { useAdminAuth } from "@/context/AdminAuthContext";
@@ -14,6 +15,7 @@ export default function AdminOrdersPage() {
     const { symbol } = useCurrency();
     const canWrite = can("order:write");
     const canChangeStatus = canWrite || can("order:status");
+    const canFulfillment = can("fulfillment:write");
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -26,6 +28,9 @@ export default function AdminOrdersPage() {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [confirmModal, setConfirmModal] = useState({ show: false, order: null, deliveryDate: "", adminNotes: "" });
     const [processing, setProcessing] = useState(false);
+    const [courierBooking, setCourierBooking] = useState(false);
+    const [courierSyncing, setCourierSyncing] = useState(false);
+    const [courierMsg, setCourierMsg] = useState("");
     const [stats, setStats] = useState({ total: 0, pending: 0, confirmed: 0, delivered: 0, cancelled: 0 });
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -108,15 +113,18 @@ export default function AdminOrdersPage() {
 
     const handleViewOrder = (order, e) => {
         e.stopPropagation();
+        setCourierMsg("");
         setSelectedOrder(order);
     };
 
     const handleRowClick = (order) => {
+        setCourierMsg("");
         setSelectedOrder(order);
     };
 
     const handleCloseDetail = () => {
         setSelectedOrder(null);
+        setCourierMsg("");
     };
 
     const handleConfirmOrder = async (e) => {
@@ -167,6 +175,51 @@ export default function AdminOrdersPage() {
             }
         } catch (error) {
             console.error("Failed to update order status:", error);
+        }
+    };
+
+    // Update both the open detail modal and the matching row in the current
+    // page's list from a single fresh order object — avoids a full refetch
+    // just to reflect a newly-booked/synced courier field.
+    const applyOrderUpdate = (updated) => {
+        if (!updated) return;
+        setSelectedOrder(updated);
+        setOrders((prev) => prev.map((o) => (o._id === updated._id ? updated : o)));
+    };
+
+    const handleBookCourier = async () => {
+        if (!selectedOrder) return;
+        setCourierMsg("");
+        setCourierBooking(true);
+        try {
+            const res = await bookCourier(selectedOrder._id);
+            if (res?.success && res.data) {
+                applyOrderUpdate(res.data);
+            } else {
+                setCourierMsg(res?.message || "Could not book this order with the courier.");
+            }
+        } catch (error) {
+            setCourierMsg("Network error. Please try again.");
+        } finally {
+            setCourierBooking(false);
+        }
+    };
+
+    const handleSyncCourier = async () => {
+        if (!selectedOrder) return;
+        setCourierMsg("");
+        setCourierSyncing(true);
+        try {
+            const res = await syncCourierStatus(selectedOrder._id);
+            if (res?.success && res.data) {
+                applyOrderUpdate(res.data);
+            } else {
+                setCourierMsg(res?.message || "Could not refresh courier status.");
+            }
+        } catch (error) {
+            setCourierMsg("Network error. Please try again.");
+        } finally {
+            setCourierSyncing(false);
         }
     };
 
@@ -443,7 +496,14 @@ export default function AdminOrdersPage() {
                                                     <FiUser className="w-4 h-4 text-emerald-600" />
                                                 </div>
                                                 <div>
-                                                    <p className="font-medium text-gray-900 text-sm">{order.customerName}</p>
+                                                    <p className="font-medium text-gray-900 text-sm flex items-center gap-1.5">
+                                                        {order.customerName}
+                                                        {order.riskFlag?.flagged && (
+                                                            <span title={order.riskFlag.reason || "Flagged for review"} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700">
+                                                                <FiAlertTriangle className="w-3 h-3" /> Flagged
+                                                            </span>
+                                                        )}
+                                                    </p>
                                                     <p className="text-xs text-gray-500">{order.customerPhone}</p>
                                                 </div>
                                             </div>
@@ -540,6 +600,64 @@ export default function AdminOrdersPage() {
                                 </span>
                             </div>
 
+                            {selectedOrder.riskFlag?.flagged && (
+                                <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+                                    <FiAlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="font-semibold text-amber-800 text-sm">Flagged for review</p>
+                                        <p className="text-sm text-amber-700 mt-0.5">{selectedOrder.riskFlag.reason || "This order matched a soft blocklist entry."}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Courier Ratio Check (Fraud BD) — full breakdown, not just the
+                                one-line summary baked into the riskFlag reason above. */}
+                            {selectedOrder.courierRatioCheck?.provider && (
+                                <div className="bg-gray-50 rounded-xl p-5">
+                                    <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                                        <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                                            <FiTruck className="w-4 h-4" />
+                                            Courier Ratio Check
+                                        </h4>
+                                        <span className="text-xs text-gray-400">
+                                            via {selectedOrder.courierRatioCheck.provider}
+                                            {selectedOrder.courierRatioCheck.checkedAt && (
+                                                <> &middot; {new Date(selectedOrder.courierRatioCheck.checkedAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</>
+                                            )}
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                        <div className="bg-white rounded-lg p-3 text-center">
+                                            <p className="text-xl font-bold text-gray-800">{selectedOrder.courierRatioCheck.totalOrders}</p>
+                                            <p className="text-xs text-gray-500 mt-0.5">Total orders</p>
+                                        </div>
+                                        <div className="bg-white rounded-lg p-3 text-center">
+                                            <p className="text-xl font-bold text-emerald-600">{selectedOrder.courierRatioCheck.successCount}</p>
+                                            <p className="text-xs text-gray-500 mt-0.5">Delivered</p>
+                                        </div>
+                                        <div className="bg-white rounded-lg p-3 text-center">
+                                            <p className="text-xl font-bold text-red-500">{selectedOrder.courierRatioCheck.cancelCount}</p>
+                                            <p className="text-xs text-gray-500 mt-0.5">Cancelled</p>
+                                        </div>
+                                        <div className={`rounded-lg p-3 text-center ${
+                                            selectedOrder.courierRatioCheck.successRate >= 70 ? "bg-emerald-50" :
+                                            selectedOrder.courierRatioCheck.successRate >= 50 ? "bg-amber-50" : "bg-red-50"
+                                        }`}>
+                                            <p className={`text-xl font-bold ${
+                                                selectedOrder.courierRatioCheck.successRate >= 70 ? "text-emerald-600" :
+                                                selectedOrder.courierRatioCheck.successRate >= 50 ? "text-amber-600" : "text-red-600"
+                                            }`}>
+                                                {selectedOrder.courierRatioCheck.successRate ?? "—"}%
+                                            </p>
+                                            <p className="text-xs text-gray-500 mt-0.5">Success rate</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-gray-400 mt-3">
+                                        Cross-courier delivery history for this phone number at the time this order was placed — not specific to this store.
+                                    </p>
+                                </div>
+                            )}
+
                             {/* Customer Info Card */}
                             <div className="bg-gray-50 rounded-xl p-5">
                                 <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -606,6 +724,77 @@ export default function AdminOrdersPage() {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Courier Card — only shown once there's something to say: the
+                                order is confirmed (so it CAN be booked) or it's already booked. */}
+                            {(selectedOrder.courier?.consignmentId || selectedOrder.orderStatus === 'confirmed') && (
+                                <div className="bg-gray-50 rounded-xl p-5">
+                                    <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <FiTruck className="w-4 h-4" />
+                                        Courier
+                                    </h4>
+
+                                    {selectedOrder.courier?.consignmentId ? (
+                                        <div className="space-y-4">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <p className="text-xs text-gray-500">Consignment ID</p>
+                                                    <p className="font-medium text-gray-800">{selectedOrder.courier.consignmentId}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500">Tracking Code</p>
+                                                    <p className="font-medium text-gray-800">{selectedOrder.courier.trackingCode || 'N/A'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500">Status</p>
+                                                    <p className="font-medium text-gray-800 capitalize">{selectedOrder.courier.status || 'Unknown'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500">Last Synced</p>
+                                                    <p className="font-medium text-gray-800">
+                                                        {selectedOrder.courier.lastSyncedAt
+                                                            ? new Date(selectedOrder.courier.lastSyncedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                                                            : 'Never'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {canFulfillment && (
+                                                <button
+                                                    onClick={handleSyncCourier}
+                                                    disabled={courierSyncing}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                                                >
+                                                    {courierSyncing ? (
+                                                        <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                                                    ) : (
+                                                        <FiRefreshCw className="w-4 h-4" />
+                                                    )}
+                                                    {courierSyncing ? 'Syncing…' : 'Sync Status'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        canFulfillment && (
+                                            <button
+                                                onClick={handleBookCourier}
+                                                disabled={courierBooking}
+                                                className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                                            >
+                                                {courierBooking ? (
+                                                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                                                ) : (
+                                                    <FiTruck className="w-4 h-4" />
+                                                )}
+                                                {courierBooking ? 'Booking…' : 'Book Courier'}
+                                            </button>
+                                        )
+                                    )}
+
+                                    {courierMsg && (
+                                        <p className="text-xs text-gray-500 mt-3">{courierMsg}</p>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Order Items Card */}
                             <div>

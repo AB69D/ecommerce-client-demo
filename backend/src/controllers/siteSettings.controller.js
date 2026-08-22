@@ -41,6 +41,15 @@ export const getPublicSettings = asyncHandler(async (_req, res) => {
         const { storeId, storePassword, ...paymentPublic } = publicView.payment;
         publicView.payment = paymentPublic;
     }
+    // Same treatment for the Fraud BD and Steadfast integration secrets.
+    if (publicView.integrations?.fraudbd) {
+        delete publicView.integrations.fraudbd.apiKey;
+    }
+    if (publicView.integrations?.steadfast) {
+        delete publicView.integrations.steadfast.apiKey;
+        delete publicView.integrations.steadfast.secretKey;
+        delete publicView.integrations.steadfast.webhookToken;
+    }
     return ok(res, publicView);
 });
 

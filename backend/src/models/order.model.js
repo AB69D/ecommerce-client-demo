@@ -81,6 +81,15 @@ const orderSchema = new Schema({
         type: String,
         required: true
     },
+    // Request IP the order was placed from (req.ip — already the real client
+    // IP behind this deployment's single trusted reverse proxy). Used for the
+    // IP blocklist and the order-velocity fraud signal. Empty for orders
+    // created before this field existed, and for POS/admin-created orders.
+    ip: {
+        type: String,
+        default: '',
+        index: true
+    },
     customerName: {
         type: String,
         required: true
@@ -88,6 +97,17 @@ const orderSchema = new Schema({
     customerPhone: {
         type: String,
         required: true
+    },
+    // Normalized (see lib/blocklist.js normalizePhoneBD) copy of customerPhone,
+    // populated at order-creation time. customerPhone itself is free-text ("01...",
+    // "+880...", "880..." all mean the same number), which makes it useless for
+    // exact-match history lookups (fraud scoring, blocklist) — this field exists
+    // so those queries can use an indexed exact match instead of a full scan.
+    // Empty on orders created before this field existed.
+    customerPhoneE164: {
+        type: String,
+        default: '',
+        index: true
     },
     customerEmail: String,
     shippingAddress: {
@@ -174,6 +194,42 @@ const orderSchema = new Schema({
     adminNotes: {
         type: String,
         default: ''
+    },
+    // Set when checkout was allowed through despite a soft blocklist match (or,
+    // from the fake-order scoring phase onward, a risk score in the review
+    // band) rather than hard-rejected — surfaces the order in the admin queue
+    // for a manual confirm/reject instead of silently trusting it. Every field
+    // defaults to empty/false so existing orders need no migration.
+    riskFlag: {
+        flagged: { type: Boolean, default: false, index: true },
+        reason: { type: String, default: '' },
+        source: { type: String, default: '' }, // e.g. 'blocklist:phone', 'blocklist:ip'
+        flaggedAt: { type: Date, default: null },
+    },
+    // Raw Fraud BD lookup result at order time (when the integration is
+    // configured — see lib/courierRatio.js), kept separate from riskFlag so an
+    // admin can see the actual numbers behind a courier-ratio flag, not just
+    // the summarized reason string. Null/default when the integration is off
+    // or the phone had no cross-courier history yet.
+    courierRatioCheck: {
+        provider: { type: String, default: '' },
+        totalOrders: { type: Number, default: 0 },
+        successCount: { type: Number, default: 0 },
+        cancelCount: { type: Number, default: 0 },
+        successRate: { type: Number, default: null },
+        checkedAt: { type: Date, default: null },
+    },
+    // Courier booking (Phase 4). Additive/optional — an order with no courier
+    // field yet just hasn't been booked. `status` is the provider's raw status
+    // string (kept as-is rather than mapped onto orderStatus — see the
+    // roadmap notes on lib/couriers/*.js for why).
+    courier: {
+        provider: { type: String, default: '' }, // e.g. 'steadfast'
+        consignmentId: { type: String, default: '', index: true },
+        trackingCode: { type: String, default: '' },
+        status: { type: String, default: '' },
+        bookedAt: { type: Date, default: null },
+        lastSyncedAt: { type: Date, default: null },
     },
     // Set when a signed-in customer places the order, linking it to their
     // account for order history. Null for guest and POS orders.

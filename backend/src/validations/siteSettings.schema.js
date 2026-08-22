@@ -21,6 +21,8 @@ const features = z
         pwa: z.boolean(),
         whatsapp: z.boolean(),
         analytics: z.boolean(),
+        productReviews: z.boolean(),
+        fakeOrderDetection: z.boolean(),
     })
     .partial();
 
@@ -89,6 +91,39 @@ const payment = z
     })
     .partial();
 
+// Tunable thresholds for the in-house + courier-ratio fraud scorers. Every
+// key optional so the admin can tune one knob without resending the rest.
+const fraudRules = z
+    .object({
+        velocityWindowMinutes: z.coerce.number().int().positive().max(10_000),
+        velocityMaxOrders: z.coerce.number().int().positive().max(1000),
+        minHistoryForReturnRate: z.coerce.number().int().positive().max(1000),
+        returnRateThreshold: z.coerce.number().min(0).max(1),
+        courierMinOrdersForRatio: z.coerce.number().int().positive().max(1000),
+        courierSuccessRateThreshold: z.coerce.number().min(0).max(100),
+    })
+    .partial();
+
+// Fraud BD courier-ratio integration. `apiKey` empty (the default) means the
+// feature is off — checkCourierRatio() no-ops until an admin sets one.
+const integrations = z
+    .object({
+        fraudbd: z
+            .object({
+                apiKey: z.string().max(200),
+                mode: z.enum(['sandbox', 'production']),
+            })
+            .partial(),
+        steadfast: z
+            .object({
+                apiKey: z.string().max(200),
+                secretKey: z.string().max(200),
+                webhookToken: z.string().max(200),
+            })
+            .partial(),
+    })
+    .partial();
+
 // Accepts #rgb or #rrggbb (case-insensitive). Empty string is rejected so a
 // blank picker never wipes a colour to an invalid value.
 const hexColor = z.string().regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Must be a hex colour like #047857');
@@ -141,5 +176,7 @@ export const updateSiteSettingsSchema = z.object({
     whatsapp: whatsapp.optional(),
     theme: theme.optional(),
     payment: payment.optional(),
+    fraudRules: fraudRules.optional(),
+    integrations: integrations.optional(),
     maintenanceMode: z.boolean().optional(),
 });

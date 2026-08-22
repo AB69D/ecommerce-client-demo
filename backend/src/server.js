@@ -47,6 +47,9 @@ import clientCheckoutRouter from './routes/clientCheckout.route.js';
 import posRouter from './routes/pos.route.js';
 import couponRouter from './routes/coupon.route.js';
 import stockRouter from './routes/stock.route.js';
+import blocklistRouter from './routes/blocklist.route.js';
+import courierRouter from './routes/courier.route.js';
+import landingPageRouter from './routes/landingPage.route.js';
 
 const app = express();
 
@@ -62,7 +65,12 @@ app.use(
 );
 app.use(
     cors({
-        origin: env.FRONTEND_URL ? [env.FRONTEND_URL, env.FRONTEND_URL.replace(/\/$/, '')] : true,
+        // Fail closed when FRONTEND_URL is unset — reflecting any origin
+        // (origin: true) while allowing credentials is an open, credentialed
+        // CORS policy for the whole admin+client API. In production, env.js's
+        // validation already refuses to boot without FRONTEND_URL set; this
+        // `false` fallback only matters for a misconfigured non-production run.
+        origin: env.FRONTEND_URL ? [env.FRONTEND_URL, env.FRONTEND_URL.replace(/\/$/, '')] : false,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'guest-id', 'Authorization'],
         credentials: true,
@@ -151,9 +159,12 @@ app.use('/api/admin/pos', requireAuth, posRouter);
 app.use('/api/admin/stock', requireAuth, stockRouter);
 app.use('/api/admin/customer', requireAuth, customerRouter);
 app.use('/api/admin/coupon', requireAuth, couponRouter.admin);
+app.use('/api/admin/blocklist', requireAuth, blocklistRouter.admin);
+app.use('/api/admin/courier', requireAuth, courierRouter.admin);
 app.use('/api/admin/site-settings', requireAuth, siteSettingsRouter.admin);
 app.use('/api/admin/footer', requireAuth, footerRouter.admin);
 app.use('/api/admin/page', requireAuth, pageRouter.admin);
+app.use('/api/admin/landing-page', requireAuth, landingPageRouter.admin);
 app.use('/api/admin/nav-menu', requireAuth, navMenuRouter.admin);
 app.use('/api/admin/contact', requireAuth, contactMessageRouter.admin);
 
@@ -173,9 +184,11 @@ app.use('/api/client/coupon', couponRouter.client);
 app.use('/api/client/site-settings', siteSettingsRouter.client);
 app.use('/api/client/footer', footerRouter.client);
 app.use('/api/client/page', pageRouter.client);
+app.use('/api/client/landing-page', landingPageRouter.client);
 app.use('/api/client/nav-menu', navMenuRouter.client);
 app.use('/api/client/chatbot', chatbotRouter);
 app.use('/api/client/track', trackingRouter);
+app.use('/api/courier/webhook', courierRouter.webhook);
 
 app.use(notFound);
 app.use(errorHandler);

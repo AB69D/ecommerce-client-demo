@@ -27,8 +27,8 @@ const siteSettingsSchema = new mongoose.Schema(
 
         socialLinks: { type: [socialLinkSchema], default: [] },
 
-        currencyCode: { type: String, default: 'USD', uppercase: true },
-        currencySymbol: { type: String, default: '$' },
+        currencyCode: { type: String, default: 'BDT', uppercase: true },
+        currencySymbol: { type: String, default: '৳' },
 
         seo: {
             defaultTitle: { type: String, default: '' },
@@ -53,6 +53,21 @@ const siteSettingsSchema = new mongoose.Schema(
             whatsapp: { type: Boolean, default: false },
             analytics: { type: Boolean, default: true },
             productReviews: { type: Boolean, default: true },
+            fakeOrderDetection: { type: Boolean, default: true },
+        },
+
+        // Tunable thresholds for the in-house fake-order risk scorer
+        // (lib/fraudScore.js). Kept out of `features` since these are numeric
+        // knobs, not on/off switches; sane defaults so the feature works
+        // out of the box without an admin ever touching this.
+        fraudRules: {
+            velocityWindowMinutes: { type: Number, default: 120, min: 1 },
+            velocityMaxOrders: { type: Number, default: 3, min: 1 },
+            minHistoryForReturnRate: { type: Number, default: 3, min: 1 },
+            returnRateThreshold: { type: Number, default: 0.5, min: 0, max: 1 },
+            // Courier-ratio thresholds (lib/courierRatio.js evaluateCourierRatio).
+            courierMinOrdersForRatio: { type: Number, default: 3, min: 1 },
+            courierSuccessRateThreshold: { type: Number, default: 60, min: 0, max: 100 },
         },
 
         // POS receipt + storefront invoice customization.
@@ -157,6 +172,31 @@ const siteSettingsSchema = new mongoose.Schema(
         },
 
         maintenanceMode: { type: Boolean, default: false },
+
+        // ── Third-party integrations ────────────────────────────────────────
+        // Fraud BD (fraudbd.com) courier delivery-ratio lookup, used by the
+        // checkout fraud scorer (lib/courierRatio.js). Stored here (not an env
+        // var) so an admin can turn it on/off and rotate the key from the panel
+        // without a redeploy. `apiKey` is empty by default -> the feature is off
+        // (checkCourierRatio() no-ops) until an admin enters a key. `apiKey` is a
+        // SECRET — the public site-settings endpoint strips it, same treatment
+        // as payment.storeId/storePassword above.
+        integrations: {
+            fraudbd: {
+                apiKey: { type: String, default: '' },
+                mode: { type: String, enum: ['sandbox', 'production'], default: 'sandbox' },
+            },
+            // Steadfast Courier (portal.steadfast.com.bd) — booking + status sync
+            // (lib/couriers/steadfast.js). Off by default, same "empty key = off"
+            // convention as fraudbd. webhookToken is a secret the admin picks and
+            // pastes into Steadfast's own dashboard (Settings > Webhook) so we can
+            // verify incoming status-update calls are really from Steadfast.
+            steadfast: {
+                apiKey: { type: String, default: '' },
+                secretKey: { type: String, default: '' },
+                webhookToken: { type: String, default: '' },
+            },
+        },
     },
     { timestamps: true },
 );

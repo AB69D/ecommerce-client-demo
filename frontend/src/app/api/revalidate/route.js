@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 // picks up the change immediately instead of waiting out the 60s ISR window
 // (see lib/dynamicContent.js). Whitelisted so this can only bust the caches
 // it's meant to, never an arbitrary tag.
-const ALLOWED_PREFIXES = ["site-settings", "footer", "nav-menu", "page:"];
+const ALLOWED_PREFIXES = ["site-settings", "footer", "nav-menu", "page:", "landing:"];
 
 const isAllowed = (tag) =>
     typeof tag === "string" && ALLOWED_PREFIXES.some((p) => tag === p || tag.startsWith(p));

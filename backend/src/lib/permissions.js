@@ -83,6 +83,15 @@ export const PERMISSION_GROUPS = Object.freeze([
         ],
     },
     {
+        key: 'risk',
+        label: 'Risk & Fraud',
+        resources: [
+            // blocklist:read/write -> view and manage individual entries
+            // blocklist:manage     -> reserved for higher-trust config (thresholds, sources)
+            { key: 'blocklist', label: 'Customer Blocklist', actions: ['read', 'write', 'manage'] },
+        ],
+    },
+    {
         key: 'admin',
         label: 'Administration',
         resources: [
@@ -90,6 +99,10 @@ export const PERMISSION_GROUPS = Object.freeze([
             { key: 'role', label: 'Roles & permissions', actions: ['read', 'manage'] },
             { key: 'audit', label: 'Audit logs', actions: ['read'] },
             { key: 'integration', label: 'Integrations (Stripe, n8n, AI...)', actions: ['read', 'manage'] },
+            // courier:manage guards the credentials screen (Api-Key/Secret-Key).
+            // The actual "Book Courier" / "Sync status" actions on an order use
+            // the existing fulfillment:write permission, not this one.
+            { key: 'courier', label: 'Courier Integrations', actions: ['read', 'manage'] },
             { key: 'compliance', label: 'GDPR / Data requests', actions: ['read', 'manage'] },
             { key: 'settings', label: 'System settings', actions: ['read', 'manage'] },
         ],
@@ -122,16 +135,18 @@ const readEverything = ALL_PERMISSIONS.filter((p) => p.endsWith(':read'));
 
 // Resources a moderator must NOT see at all (admin-only areas + POS).
 const MODERATOR_HIDDEN_RESOURCES = new Set([
-    'user', 'role', 'audit', 'integration', 'compliance', 'settings', 'pos',
+    'user', 'role', 'audit', 'integration', 'compliance', 'settings', 'pos', 'blocklist',
 ]);
 
 export const ROLE_PERMISSIONS = Object.freeze({
     // Full access — bypasses the matrix entirely.
     'super-admin': ['*'],
 
-    // Everything except role administration & integration secrets.
+    // Everything except role administration, integration secrets, and the
+    // higher-trust fraud-config action (blocklist:manage) — same treatment as
+    // settings:manage.
     admin: ALL_PERMISSIONS.filter(
-        (p) => !p.startsWith('role:') && p !== 'integration:manage' && p !== 'settings:manage',
+        (p) => !p.startsWith('role:') && p !== 'integration:manage' && p !== 'settings:manage' && p !== 'blocklist:manage' && p !== 'courier:manage',
     ),
 
     // Read-only across the storefront/operations data by default. They cannot
