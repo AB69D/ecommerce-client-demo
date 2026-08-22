@@ -46,3 +46,10 @@
 **/*.pem
 **/.passenger/
 **/tmp/restart.txt
+
+# Local-only dev scripts (hardcoded test credentials / local Mongo helpers —
+# never meant to run anywhere but a developer's machine)
+backend/*.local.mjs
+
+# Claude Code local session config
+.claude/
