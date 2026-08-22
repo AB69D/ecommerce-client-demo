@@ -46,20 +46,20 @@ clientCartRouter.get('/get', async (req, res) => {
 
 clientCartRouter.post('/add', async (req, res) => {
     try {
-        const { productId, productName, productImage, quantity = 1, weight, weightIndex = 0, price, discountPercent = 0 } = req.body;
+        const { productId, productName, productImage, quantity = 1, weight, weightIndex = 0 } = req.body;
         let guestId = getGuestId(req);
-        
+
         // Ensure weightIndex is a number
         const weightIdx = Number(weightIndex) || 0;
         const qty = Number(quantity) || 1;
-        
+
         if (!guestId) {
             guestId = `guest_${Date.now()}`;
         }
 
-        if (!productId || !price) {
+        if (!productId) {
             return res.status(400).json({
-                message: "Product ID and price are required",
+                message: "Product ID is required",
                 error: true,
                 success: false
             });
@@ -67,7 +67,7 @@ clientCartRouter.post('/add', async (req, res) => {
 
         // Check stock before adding - convert productId to ObjectId if needed
         const product = await ProductModel.findById(productId);
-        
+
         if (!product || !product.weights || !product.weights[weightIdx]) {
             return res.status(400).json({
                 message: "Product or weight variant not found",
@@ -75,6 +75,12 @@ clientCartRouter.post('/add', async (req, res) => {
                 success: false
             });
         }
+
+        // Price and discount always come from the product record, never the
+        // client — a client-supplied price here would flow straight through
+        // to the order total at checkout.
+        const price = product.weights[weightIdx].price;
+        const discountPercent = product.weights[weightIdx].discountPercent || 0;
 
         const availableStock = product.weights[weightIdx]?.stock || 0;
         if (availableStock < qty) {
@@ -124,6 +130,7 @@ clientCartRouter.post('/add', async (req, res) => {
                 });
             }
             cart.items[existingItemIndex].quantity = newQuantity;
+            cart.items[existingItemIndex].price = price;
             cart.items[existingItemIndex].discountPercent = discountPercent || 0;
         } else {
             cart.items.push({

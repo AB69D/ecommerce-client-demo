@@ -39,6 +39,16 @@ const schema = z.object({
     // across everyone behind it. Configurable so a deployment behind a busy
     // shared IP can raise it without a code change.
     AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(60),
+}).superRefine((data, ctx) => {
+    // An unset FRONTEND_URL makes the CORS policy in server.js fall open to
+    // any origin — fine for a local dev box, not acceptable in production.
+    if (data.NODE_ENV === 'production' && !data.FRONTEND_URL) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['FRONTEND_URL'],
+            message: 'FRONTEND_URL is required when NODE_ENV=production (CORS would otherwise fail open to any origin)',
+        });
+    }
 });
 
 const parsed = schema.safeParse(process.env);
