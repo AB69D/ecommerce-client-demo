@@ -5,10 +5,10 @@ import { createContext, useContext, useEffect, useState, useCallback } from "rea
 // The root layout fetches site settings server-side and seeds `initial*` so the
 // first paint already shows the correct symbol (no flash); we also re-check on
 // the client so a freshly-changed symbol shows without a full reload.
-const CurrencyContext = createContext({ symbol: "$", code: "USD" });
+const CurrencyContext = createContext({ symbol: "৳", code: "BDT" });
 
-export function CurrencyProvider({ initialSymbol = "$", initialCode = "USD", children }) {
-    const [currency, setCurrency] = useState({ symbol: initialSymbol || "$", code: initialCode || "USD" });
+export function CurrencyProvider({ initialSymbol = "৳", initialCode = "BDT", children }) {
+    const [currency, setCurrency] = useState({ symbol: initialSymbol || "৳", code: initialCode || "BDT" });
 
     useEffect(() => {
         let active = true;
@@ -17,7 +17,7 @@ export function CurrencyProvider({ initialSymbol = "$", initialCode = "USD", chi
             .then((j) => {
                 const d = j?.data;
                 if (active && d && (d.currencySymbol || d.currencyCode)) {
-                    setCurrency({ symbol: d.currencySymbol || "$", code: d.currencyCode || "USD" });
+                    setCurrency({ symbol: d.currencySymbol || "৳", code: d.currencyCode || "BDT" });
                 }
             })
             .catch(() => {});

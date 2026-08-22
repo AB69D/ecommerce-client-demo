@@ -1060,7 +1060,7 @@ function CartPanel(props) {
                                         discount.type === "flat" ? "bg-amber-500 text-white" : "bg-white text-slate-500 hover:bg-slate-50"
                                     }`}
                                 >
-                                    {money(0).replace(/[0-9.,\s]/g, "") || "$"}
+                                    {money(0).replace(/[0-9.,\s]/g, "") || "৳"}
                                 </button>
                             </div>
                             <div className="relative flex-1">

@@ -116,8 +116,8 @@ export async function generateViewport() {
 
 export default async function RootLayout({ children }) {
   const settings = await fetchSiteSettings();
-  const currencySymbol = settings?.currencySymbol || "$";
-  const currencyCode = settings?.currencyCode || "USD";
+  const currencySymbol = settings?.currencySymbol || "৳";
+  const currencyCode = settings?.currencyCode || "BDT";
   const pwaEnabled = settings?.features?.pwa !== false;
   const analyticsEnabled = settings?.features?.analytics !== false;
   const analytics = settings?.analytics || {};

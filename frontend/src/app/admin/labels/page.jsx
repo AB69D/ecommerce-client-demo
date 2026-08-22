@@ -17,7 +17,7 @@ export default function LabelsPage() {
     const [expanded, setExpanded] = useState(null); // productId currently expanded
     const [queue, setQueue] = useState([]); // [{ key, name, weight, sku, barcode, price, qty }]
     const [cfg, setCfg] = useState({
-        labelWidthMm: 40, labelHeightMm: 30, showName: true, showPrice: true, currencySymbol: "$",
+        labelWidthMm: 40, labelHeightMm: 30, showName: true, showPrice: true, currencySymbol: "৳",
     });
     const sheetRef = useRef(null);
 
@@ -32,7 +32,7 @@ export default function LabelsPage() {
                     labelHeightMm: Number(b.labelHeightMm) || 30,
                     showName: b.showName !== false,
                     showPrice: b.showPrice !== false,
-                    currencySymbol: s.currencySymbol || "$",
+                    currencySymbol: s.currencySymbol || "৳",
                 });
             })
             .catch(() => { /* keep defaults */ });

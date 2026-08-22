@@ -31,7 +31,7 @@ const loadBrand = async () => {
     const s = (await getSettings().catch(() => null)) || {};
     return {
         siteName: s.siteName || process.env.MAIL_FROM_NAME || 'Our Shop',
-        symbol: s.currencySymbol || '$',
+        symbol: s.currencySymbol || '৳',
         primary: s.theme?.primary || '#047857',
         accent: s.theme?.accent || '#f59e0b',
         logo: s.logoUrl || '',

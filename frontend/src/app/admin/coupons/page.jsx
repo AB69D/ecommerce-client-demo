@@ -29,7 +29,7 @@ export default function CouponsPage() {
     const [coupons, setCoupons] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
-    const [symbol, setSymbol] = useState("$");
+    const [symbol, setSymbol] = useState("৳");
     const [modal, setModal] = useState({ show: false, editing: null, form: BLANK });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
@@ -55,7 +55,7 @@ export default function CouponsPage() {
 
     useEffect(() => {
         getSiteSettings()
-            .then((res) => setSymbol((res?.data || res)?.currencySymbol || "$"))
+            .then((res) => setSymbol((res?.data || res)?.currencySymbol || "৳"))
             .catch(() => {});
     }, []);
 

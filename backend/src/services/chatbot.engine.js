@@ -43,14 +43,14 @@ const variantImage = (p, idx) =>
     p?.cover_image || p?.weights?.[idx]?.images?.[0] || p?.weights?.[0]?.images?.[0] || '';
 
 // Cached site settings (currency + name) so we don't query every turn.
-let _settings = { at: 0, symbol: '$', siteName: 'our store' };
+let _settings = { at: 0, symbol: '৳', siteName: 'our store' };
 async function getSettings() {
     if (Date.now() - _settings.at < 5 * 60 * 1000) return _settings;
     try {
         const s = await SiteSettings.findOne({ key: 'global' }).lean();
         _settings = {
             at: Date.now(),
-            symbol: s?.currencySymbol || '$',
+            symbol: s?.currencySymbol || '৳',
             siteName: s?.siteName || 'our store',
         };
     } catch {

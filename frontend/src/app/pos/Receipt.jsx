@@ -6,7 +6,7 @@ import { FiPrinter, FiX, FiCheckCircle } from "react-icons/fi";
 // or a full A4 invoice, and prints the active one via a hidden iframe
 // (popup-blocker safe, doesn't disturb the page). Layout/labels come from the
 // admin's Site Settings → POS & Receipt config.
-export default function ReceiptModal({ order, settings, symbol = "$", onClose }) {
+export default function ReceiptModal({ order, settings, symbol = "৳", onClose }) {
     const ref = useRef(null);
     const [format, setFormat] = useState("thermal"); // 'thermal' | 'a4'
     if (!order) return null;

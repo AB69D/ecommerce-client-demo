@@ -41,7 +41,7 @@ export async function generateMetadata({ params }) {
     const { id } = await params;
     const [settings, product] = await Promise.all([getSettings(), getProduct(id)]);
     const siteName = settings?.siteName || "Ab9dEcommerce";
-    const currencySymbol = settings?.currencySymbol || "$";
+    const currencySymbol = settings?.currencySymbol || "৳";
 
     if (product) {
         const productName = `${product.firstName} ${product.lastName || ''}`.trim();
@@ -93,7 +93,7 @@ export default async function ProductDetailsPage({ params }) {
         const productName = `${product.firstName} ${product.lastName || ''}`.trim();
         const image = absoluteUrl(product.cover_image || product.weights?.[0]?.images?.[0] || "/logo.png");
         const price = product.weights?.[0]?.price || 0;
-        const currencyCode = settings?.currencyCode || "USD";
+        const currencyCode = settings?.currencyCode || "BDT";
         const inStock = (product.weights || []).some((w) => Number(w?.stock) > 0);
 
         productLd = {
