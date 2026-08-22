@@ -5,11 +5,74 @@ import { usePathname, useRouter } from "next/navigation";
 import {
     FiGrid, FiPackage, FiLayout, FiList, FiTruck, FiMenu, FiX, FiSettings,
     FiHome, FiPercent, FiStar, FiLogOut, FiUsers, FiShield, FiFileText, FiUser,
-    FiShoppingBag, FiTag, FiBarChart2, FiMail,
+    FiShoppingBag, FiTag, FiBarChart2, FiMail, FiChevronDown, FiTarget, FiActivity,
 } from "react-icons/fi";
 import { isAuthenticated, logout, fetchMe } from "@/services/adminAuth";
 import { AdminAuthContext, buildCan } from "@/context/AdminAuthContext";
 import { hasAnyPermission } from "@/lib/permissions";
+
+// perms: list of permissions; the item shows if the user has ANY of them.
+// An empty perms list means "always visible".
+const menuGroups = [
+    {
+        title: 'Overview',
+        items: [
+            { name: 'Dashboard', path: '/admin', icon: <FiGrid className="w-5 h-5" />, perms: [] },
+        ],
+    },
+    {
+        title: 'Commerce',
+        items: [
+            { name: 'Orders', path: '/admin/orders', icon: <FiTruck className="w-5 h-5" />, perms: ['order:read'] },
+            { name: 'Customers', path: '/admin/customers', icon: <FiUser className="w-5 h-5" />, perms: ['customer:read'] },
+            { name: 'Add Category', path: '/admin/category', icon: <FiGrid className="w-5 h-5" />, perms: ['category:write'] },
+            { name: 'All Categories', path: '/admin/category/all-categories', icon: <FiList className="w-5 h-5" />, perms: ['category:read'] },
+            { name: 'Upload Product', path: '/admin/product', icon: <FiPackage className="w-5 h-5" />, perms: ['product:write'] },
+            { name: 'All Products', path: '/admin/product/all-products', icon: <FiPackage className="w-5 h-5" />, perms: ['product:read'] },
+            { name: 'Barcode Labels', path: '/admin/labels', icon: <FiTag className="w-5 h-5" />, perms: ['product:read'] },
+            { name: 'Stock Management', path: '/admin/stock', icon: <FiTruck className="w-5 h-5" />, perms: ['inventory:read'] },
+            { name: 'Stock Ledger', path: '/admin/stock-ledger', icon: <FiList className="w-5 h-5" />, perms: ['inventory:read'] },
+            { name: 'Discounts', path: '/admin/discount', icon: <FiPercent className="w-5 h-5" />, perms: ['discount:read'] },
+            { name: 'Coupons', path: '/admin/coupons', icon: <FiTag className="w-5 h-5" />, perms: ['discount:read'] },
+            { name: 'Profit Report', path: '/admin/profit', icon: <FiBarChart2 className="w-5 h-5" />, perms: ['analytics:read'] },
+        ],
+    },
+    {
+        title: 'Risk & Fraud',
+        items: [
+            { name: 'Blocklist', path: '/admin/blocklist', icon: <FiShield className="w-5 h-5" />, perms: ['blocklist:read'] },
+            { name: 'Fraud Prevention', path: '/admin/fraud-settings', icon: <FiActivity className="w-5 h-5" />, perms: ['content:read'] },
+        ],
+    },
+    {
+        title: 'Storefront',
+        items: [
+            { name: 'Headers', path: '/admin/header', icon: <FiLayout className="w-5 h-5" />, perms: ['header:read'] },
+            { name: 'Reviews', path: '/admin/reviews', icon: <FiStar className="w-5 h-5" />, perms: ['review:read'] },
+            { name: 'Pages', path: '/admin/pages', icon: <FiFileText className="w-5 h-5" />, perms: ['content:read'] },
+            { name: 'Landing Pages', path: '/admin/landing-pages', icon: <FiTarget className="w-5 h-5" />, perms: ['content:read'] },
+            { name: 'Messages', path: '/admin/messages', icon: <FiMail className="w-5 h-5" />, perms: ['content:read'] },
+            { name: 'Site Settings', path: '/admin/settings', icon: <FiSettings className="w-5 h-5" />, perms: ['content:read'] },
+        ],
+    },
+    {
+        title: 'Administration',
+        items: [
+            { name: 'Users & Roles', path: '/admin/admins', icon: <FiUsers className="w-5 h-5" />, perms: ['user:read'] },
+            { name: 'POS Sellers', path: '/admin/pos-sellers', icon: <FiShoppingBag className="w-5 h-5" />, perms: ['user:read'] },
+            { name: 'Audit Logs', path: '/admin/audit-logs', icon: <FiFileText className="w-5 h-5" />, perms: ['audit:read'] },
+            { name: 'My Account', path: '/admin/account', icon: <FiUser className="w-5 h-5" />, perms: [] },
+        ],
+    },
+];
+
+const isItemActive = (path, pathname) =>
+    pathname === path || (path !== '/admin' && pathname.startsWith(path + '/'));
+
+const findActiveGroupTitle = (pathname) => {
+    const group = menuGroups.find((g) => g.items.some((it) => isItemActive(it.path, pathname)));
+    return group?.title ?? null;
+};
 
 export default function AdminLayout({ children }) {
     const pathname = usePathname();
@@ -18,8 +81,20 @@ export default function AdminLayout({ children }) {
     const [isMobile, setIsMobile] = useState(false);
     const [checkedAuth, setCheckedAuth] = useState(false);
     const [me, setMe] = useState(null);
+    const [openGroups, setOpenGroups] = useState(() => {
+        const activeTitle = findActiveGroupTitle(pathname);
+        return activeTitle ? { [activeTitle]: true } : {};
+    });
 
     const isLoginPage = pathname === '/admin/login';
+
+    // Accordion behavior — opening a group closes every other one, and there's
+    // always exactly one open (clicking the already-open group is a no-op
+    // rather than collapsing to none, so there's never a moment with nothing
+    // to navigate from).
+    const toggleGroup = (title) => {
+        setOpenGroups({ [title]: true });
+    };
 
     const loadMe = useCallback(async () => {
         const result = await fetchMe();
@@ -64,6 +139,12 @@ export default function AdminLayout({ children }) {
         return () => { document.body.style.overflow = 'unset'; };
     }, [sidebarOpen]);
 
+    useEffect(() => {
+        const activeTitle = findActiveGroupTitle(pathname);
+        if (!activeTitle) return;
+        setOpenGroups((prev) => (prev[activeTitle] ? prev : { ...prev, [activeTitle]: true }));
+    }, [pathname]);
+
     if (isLoginPage) {
         return <>{children}</>;
     }
@@ -75,53 +156,6 @@ export default function AdminLayout({ children }) {
             </div>
         );
     }
-
-    // perms: list of permissions; the item shows if the user has ANY of them.
-    // An empty perms list means "always visible".
-    const menuGroups = [
-        {
-            title: 'Overview',
-            items: [
-                { name: 'Dashboard', path: '/admin', icon: <FiGrid className="w-5 h-5" />, perms: [] },
-            ],
-        },
-        {
-            title: 'Commerce',
-            items: [
-                { name: 'Orders', path: '/admin/orders', icon: <FiTruck className="w-5 h-5" />, perms: ['order:read'] },
-                { name: 'Customers', path: '/admin/customers', icon: <FiUser className="w-5 h-5" />, perms: ['customer:read'] },
-                { name: 'Add Category', path: '/admin/category', icon: <FiGrid className="w-5 h-5" />, perms: ['category:write'] },
-                { name: 'All Categories', path: '/admin/category/all-categories', icon: <FiList className="w-5 h-5" />, perms: ['category:read'] },
-                { name: 'Upload Product', path: '/admin/product', icon: <FiPackage className="w-5 h-5" />, perms: ['product:write'] },
-                { name: 'All Products', path: '/admin/product/all-products', icon: <FiPackage className="w-5 h-5" />, perms: ['product:read'] },
-                { name: 'Barcode Labels', path: '/admin/labels', icon: <FiTag className="w-5 h-5" />, perms: ['product:read'] },
-                { name: 'Stock Management', path: '/admin/stock', icon: <FiTruck className="w-5 h-5" />, perms: ['inventory:read'] },
-                { name: 'Stock Ledger', path: '/admin/stock-ledger', icon: <FiList className="w-5 h-5" />, perms: ['inventory:read'] },
-                { name: 'Discounts', path: '/admin/discount', icon: <FiPercent className="w-5 h-5" />, perms: ['discount:read'] },
-                { name: 'Coupons', path: '/admin/coupons', icon: <FiTag className="w-5 h-5" />, perms: ['discount:read'] },
-                { name: 'Profit Report', path: '/admin/profit', icon: <FiBarChart2 className="w-5 h-5" />, perms: ['analytics:read'] },
-            ],
-        },
-        {
-            title: 'Storefront',
-            items: [
-                { name: 'Headers', path: '/admin/header', icon: <FiLayout className="w-5 h-5" />, perms: ['header:read'] },
-                { name: 'Reviews', path: '/admin/reviews', icon: <FiStar className="w-5 h-5" />, perms: ['review:read'] },
-                { name: 'Pages', path: '/admin/pages', icon: <FiFileText className="w-5 h-5" />, perms: ['content:read'] },
-                { name: 'Messages', path: '/admin/messages', icon: <FiMail className="w-5 h-5" />, perms: ['content:read'] },
-                { name: 'Site Settings', path: '/admin/settings', icon: <FiSettings className="w-5 h-5" />, perms: ['content:read'] },
-            ],
-        },
-        {
-            title: 'Administration',
-            items: [
-                { name: 'Users & Roles', path: '/admin/admins', icon: <FiUsers className="w-5 h-5" />, perms: ['user:read'] },
-                { name: 'POS Sellers', path: '/admin/pos-sellers', icon: <FiShoppingBag className="w-5 h-5" />, perms: ['user:read'] },
-                { name: 'Audit Logs', path: '/admin/audit-logs', icon: <FiFileText className="w-5 h-5" />, perms: ['audit:read'] },
-                { name: 'My Account', path: '/admin/account', icon: <FiUser className="w-5 h-5" />, perms: [] },
-            ],
-        },
-    ];
 
     const ctxValue = { me, loading: false, can: buildCan(me), refresh: loadMe };
 
@@ -176,32 +210,48 @@ export default function AdminLayout({ children }) {
                             {menuGroups.map((group) => {
                                 const visible = group.items.filter((it) => hasAnyPermission(me, it.perms));
                                 if (visible.length === 0) return null;
+                                const isOpen = !!openGroups[group.title];
                                 return (
                                     <div key={group.title}>
-                                        <p className="px-4 mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-                                            {group.title}
-                                        </p>
-                                        <div className="space-y-1">
-                                            {visible.map((item) => {
-                                                const isActive = pathname === item.path;
-                                                return (
-                                                    <Link
-                                                        key={item.path}
-                                                        href={item.path}
-                                                        onClick={() => setSidebarOpen(false)}
-                                                        className={`
-                                                            flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium text-sm transition-all
-                                                            ${isActive
-                                                                ? "bg-indigo-600 text-white shadow-md"
-                                                                : "text-gray-600 hover:bg-gray-50 hover:text-indigo-600"
-                                                            }
-                                                        `}
-                                                    >
-                                                        {item.icon}
-                                                        <span>{item.name}</span>
-                                                    </Link>
-                                                );
-                                            })}
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleGroup(group.title)}
+                                            aria-expanded={isOpen}
+                                            className="w-full flex items-center justify-between px-4 py-1 mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 hover:text-gray-600 transition-colors"
+                                        >
+                                            <span>{group.title}</span>
+                                            <FiChevronDown
+                                                className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? '' : '-rotate-90'}`}
+                                            />
+                                        </button>
+                                        <div
+                                            className={`grid transition-all duration-200 ease-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                                                }`}
+                                        >
+                                            <div className="overflow-hidden">
+                                                <div className="space-y-1 pb-1">
+                                                    {visible.map((item) => {
+                                                        const isActive = pathname === item.path;
+                                                        return (
+                                                            <Link
+                                                                key={item.path}
+                                                                href={item.path}
+                                                                onClick={() => setSidebarOpen(false)}
+                                                                className={`
+                                                                    flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium text-sm transition-all
+                                                                    ${isActive
+                                                                        ? "bg-indigo-600 text-white shadow-md"
+                                                                        : "text-gray-600 hover:bg-gray-50 hover:text-indigo-600"
+                                                                    }
+                                                                `}
+                                                            >
+                                                                {item.icon}
+                                                                <span>{item.name}</span>
+                                                            </Link>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 );

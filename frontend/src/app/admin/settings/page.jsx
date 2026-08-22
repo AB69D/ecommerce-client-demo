@@ -1,16 +1,16 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import Image from "next/image";
 import {
-    FiSettings, FiImage, FiUpload, FiTrash2, FiPlus, FiCheck, FiAlertCircle,
+    FiSettings, FiTrash2, FiPlus, FiCheck, FiAlertCircle,
     FiType, FiPhone, FiShare2, FiSearch, FiLayout, FiSave, FiX,
     FiToggleRight, FiPrinter, FiTag, FiActivity, FiDroplet, FiRotateCcw, FiCreditCard,
 } from "react-icons/fi";
-import { getSiteSettings, updateSiteSettings, uploadSiteImage } from "@/services/siteSettings";
+import { getSiteSettings, updateSiteSettings } from "@/services/siteSettings";
 import { getFooterSettings, updateFooterSettings } from "@/services/footer";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { SITE_PAGES, PAGE_BY_PATH } from "@/lib/sitePages";
 import { revalidateTags } from "@/lib/revalidate";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 const TABS = [
     { id: "branding", label: "Branding", icon: <FiType className="w-4 h-4" /> },
@@ -39,16 +39,17 @@ const FEATURE_FLAGS = [
     ["whatsapp", "WhatsApp notifications", "Send order updates over WhatsApp."],
     ["analytics", "Web analytics", "Inject GA4 / Pixel / GTM tags into the storefront."],
     ["productReviews", "Product reviews", "Let shoppers rate and review products."],
+    ["fakeOrderDetection", "Fake-order detection", "Flag suspicious orders (rapid repeat orders, high-return-rate phones) for manual review instead of auto-accepting them."],
 ];
 
 // Common currencies for the settings dropdown. Picking one auto-fills BOTH the
 // ISO code and the display symbol; "Custom" reveals the manual code/symbol
 // fields for anything not listed here. The symbol is what shows before prices.
 const CURRENCIES = [
+    { code: "BDT", symbol: "৳", name: "Bangladeshi Taka" },
     { code: "USD", symbol: "$", name: "US Dollar" },
     { code: "EUR", symbol: "€", name: "Euro" },
     { code: "GBP", symbol: "£", name: "British Pound" },
-    { code: "BDT", symbol: "৳", name: "Bangladeshi Taka" },
     { code: "INR", symbol: "₹", name: "Indian Rupee" },
     { code: "PKR", symbol: "₨", name: "Pakistani Rupee" },
     { code: "AED", symbol: "د.إ", name: "UAE Dirham" },
@@ -174,48 +175,6 @@ function Toggle({ checked, onChange, label, hint }) {
     );
 }
 
-function ImageUpload({ label, value, onChange, hint }) {
-    const [busy, setBusy] = useState(false);
-    const [err, setErr] = useState("");
-    const pick = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        setBusy(true); setErr("");
-        try {
-            const res = await uploadSiteImage(file);
-            if (res?.success && res.data?.url) onChange(res.data.url);
-            else setErr(res?.message || "Upload failed");
-        } catch { setErr("Upload failed"); }
-        finally { setBusy(false); e.target.value = ""; }
-    };
-    return (
-        <Field label={label} hint={hint}>
-            <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
-                    {value ? (
-                        <Image src={value} alt={label} width={80} height={80} className="object-contain w-full h-full" unoptimized />
-                    ) : (
-                        <FiImage className="w-7 h-7 text-gray-300" />
-                    )}
-                </div>
-                <div className="flex flex-col gap-2">
-                    <label className="inline-flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl cursor-pointer w-fit">
-                        {busy ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <FiUpload className="w-4 h-4" />}
-                        {busy ? "Uploading..." : "Upload"}
-                        <input type="file" accept="image/*" onChange={pick} className="hidden" disabled={busy} />
-                    </label>
-                    {value && (
-                        <button type="button" onClick={() => onChange("")} className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-600 w-fit">
-                            <FiTrash2 className="w-3.5 h-3.5" /> Remove
-                        </button>
-                    )}
-                    {err && <span className="text-xs text-red-500">{err}</span>}
-                </div>
-            </div>
-        </Field>
-    );
-}
-
 export default function SettingsPage() {
     const { can } = useAdminAuth();
     const editable = can("content:write");
@@ -263,8 +222,8 @@ export default function SettingsPage() {
                 contactPhone: settings.contactPhone || "",
                 contactAddress: settings.contactAddress || "",
                 socialLinks: (settings.socialLinks || []).filter((l) => l.platform?.trim() && l.url?.trim()),
-                currencyCode: (settings.currencyCode || "USD").toUpperCase().slice(0, 3),
-                currencySymbol: settings.currencySymbol || "$",
+                currencyCode: (settings.currencyCode || "BDT").toUpperCase().slice(0, 3),
+                currencySymbol: settings.currencySymbol || "৳",
                 seo: {
                     defaultTitle: settings.seo?.defaultTitle || "",
                     defaultDescription: settings.seo?.defaultDescription || "",
@@ -598,8 +557,8 @@ export default function SettingsPage() {
                             </div>
                         )}
                         <p className="text-xs text-gray-500 -mt-2">
-                            Preview: <span className="font-semibold text-gray-700">{settings.currencySymbol || "$"}1,250.00</span>
-                            <span className="text-gray-400"> · {(settings.currencyCode || "USD").toUpperCase()}</span>
+                            Preview: <span className="font-semibold text-gray-700">{settings.currencySymbol || "৳"}1,250.00</span>
+                            <span className="text-gray-400"> · {(settings.currencyCode || "BDT").toUpperCase()}</span>
                         </p>
                         <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
                             <Toggle label="Maintenance mode" hint="Show a maintenance notice to visitors." checked={!!settings.maintenanceMode} onChange={(v) => setS({ maintenanceMode: v })} />
