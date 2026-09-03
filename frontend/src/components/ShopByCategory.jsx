@@ -38,7 +38,7 @@ export default function ShopByCategory() {
                 >
                     Browse
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-50 tracking-tight">
                     Shop by Category
                 </h2>
                 <span
@@ -52,8 +52,8 @@ export default function ShopByCategory() {
                     {loading
                         ? Array.from({ length: 6 }).map((_, i) => (
                               <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0 snap-start">
-                                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-100 animate-pulse" />
-                                  <div className="w-14 h-3 rounded bg-gray-100 animate-pulse" />
+                                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-100 dark:bg-gray-800 animate-pulse" />
+                                  <div className="w-14 h-3 rounded bg-gray-100 dark:bg-gray-800 animate-pulse" />
                               </div>
                           ))
                         : categories.map((cat, i) => (
@@ -66,8 +66,8 @@ export default function ShopByCategory() {
                                           className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-[2.5px] transition-transform duration-300 group-hover:scale-105"
                                           style={{ background: "linear-gradient(135deg, var(--theme-primary), var(--theme-accent))" }}
                                       >
-                                          <span className="block w-full h-full rounded-full bg-white p-[3px]">
-                                              <span className="block w-full h-full rounded-full overflow-hidden bg-gray-100 shadow-sm">
+                                          <span className="block w-full h-full rounded-full bg-white dark:bg-gray-950 p-[3px]">
+                                              <span className="block w-full h-full rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-sm">
                                                   {cat.category_image ? (
                                                       <img
                                                           src={cat.category_image}
@@ -87,7 +87,7 @@ export default function ShopByCategory() {
                                               </span>
                                           </span>
                                       </span>
-                                      <span className="text-xs sm:text-sm font-medium text-gray-700 text-center leading-tight line-clamp-2">
+                                      <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 text-center leading-tight line-clamp-2">
                                           {cat.category_name}
                                       </span>
                                   </Link>

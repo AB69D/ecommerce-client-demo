@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import AppChrome from "@/components/AppChrome.jsx";
 import PwaRegister from "@/components/PwaRegister.jsx";
@@ -6,6 +7,10 @@ import Analytics from "@/components/Analytics.jsx";
 import JsonLd from "@/components/JsonLd.jsx";
 import { CurrencyProvider } from "@/context/CurrencyContext.jsx";
 import { CustomerAuthProvider } from "@/context/CustomerAuthContext.jsx";
+import { CartProvider } from "@/context/CartContext.jsx";
+import { QuickViewProvider } from "@/context/QuickViewContext.jsx";
+import CartDrawer from "@/components/CartDrawer.jsx";
+import QuickViewModal from "@/components/QuickViewModal.jsx";
 import { fetchSiteSettings } from "@/lib/dynamicContent.js";
 import { SITE_URL, absoluteUrl, buildSiteJsonLd } from "@/lib/seo.js";
 
@@ -132,6 +137,12 @@ export default async function RootLayout({ children }) {
         {/* Server-rendered theme variables — first in the body so colours are set
             before any content paints (no flash of the default palette). */}
         <style id="theme-vars" dangerouslySetInnerHTML={{ __html: themeCss(theme) }} />
+        {/* Applies the saved/OS dark-mode preference before first paint — same
+            no-flash goal as the theme-vars style tag above, for light vs dark
+            instead of brand colour. beforeInteractive runs before hydration. */}
+        <Script id="theme-init" strategy="beforeInteractive">
+          {"(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);}catch(e){}})();"}
+        </Script>
         <Analytics
           enabled={analyticsEnabled}
           gtmId={analytics.gtmId}
@@ -143,8 +154,14 @@ export default async function RootLayout({ children }) {
         ))}
         <CurrencyProvider initialSymbol={currencySymbol} initialCode={currencyCode}>
           <CustomerAuthProvider>
-            <AppChrome>{children}</AppChrome>
-            <PwaRegister enabled={pwaEnabled} />
+            <CartProvider>
+              <QuickViewProvider>
+                <AppChrome>{children}</AppChrome>
+                <CartDrawer />
+                <QuickViewModal />
+                <PwaRegister enabled={pwaEnabled} />
+              </QuickViewProvider>
+            </CartProvider>
           </CustomerAuthProvider>
         </CurrencyProvider>
       </body>

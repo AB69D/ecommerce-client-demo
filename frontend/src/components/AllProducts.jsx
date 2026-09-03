@@ -6,8 +6,10 @@ import { ProductGridSkeleton } from "./ProductCardSkeleton";
 import { useCurrency } from "@/context/CurrencyContext.jsx";
 import ProductRating from "./ProductRating.jsx";
 import WishlistButton from "./WishlistButton.jsx";
+import { useQuickView } from "@/context/QuickViewContext.jsx";
 
 export default function AllProducts() {
+    const { open: openQuickView } = useQuickView();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -55,7 +57,7 @@ export default function AllProducts() {
             <div className="w-full py-8 px-4">
                 <div className="flex flex-col items-center text-center mb-6">
                 <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--theme-accent)" }}>Shop All</span>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">All Products</h2>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-50 tracking-tight">All Products</h2>
                 <span className="mt-2 h-1 w-14 rounded-full" style={{ background: "linear-gradient(to right, var(--theme-primary), var(--theme-accent))" }} />
             </div>
                 <ProductGridSkeleton count={10} />
@@ -74,7 +76,7 @@ export default function AllProducts() {
     if (products.length === 0) {
         return (
             <div className="w-full py-10 flex items-center justify-center">
-                <p className="text-gray-500">No products available</p>
+                <p className="text-gray-500 dark:text-gray-400">No products available</p>
             </div>
         );
     }
@@ -83,7 +85,7 @@ export default function AllProducts() {
         <div className="w-full py-8 px-4">
             <div className="flex flex-col items-center text-center mb-6">
                 <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--theme-accent)" }}>Shop All</span>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">All Products</h2>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-50 tracking-tight">All Products</h2>
                 <span className="mt-2 h-1 w-14 rounded-full" style={{ background: "linear-gradient(to right, var(--theme-primary), var(--theme-accent))" }} />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 max-w-7xl mx-auto fade-in-stagger">
@@ -98,9 +100,9 @@ export default function AllProducts() {
                             onClick={() => goToProduct(product._id)}
                             onMouseEnter={() => setHoveredProduct(product._id)}
                             onMouseLeave={() => setHoveredProduct(null)}
-                            className="card-hover bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer"
+                            className="card-hover bg-white dark:bg-gray-900 rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 cursor-pointer"
                         >
-                            <div className="relative aspect-square bg-gray-100 overflow-hidden">
+                            <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden">
                                 {productImage ? (
                                     <img
                                         src={productImage}
@@ -110,7 +112,7 @@ export default function AllProducts() {
                                         className={`w-full h-full object-cover transition-transform duration-300 ${hoveredProduct === product._id ? 'scale-110' : ''}`}
                                     />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                    <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
                                         No Image
                                     </div>
                                 )}
@@ -120,18 +122,22 @@ export default function AllProducts() {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                goToProduct(product._id);
+                                                openQuickView(product);
                                             }}
-                                            className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-white hover:bg-emerald-600 hover:text-white text-gray-800 text-[10px] sm:text-xs font-medium rounded-full transition-colors"
+                                            className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-white dark:bg-gray-900 hover:bg-emerald-600 hover:text-white text-gray-800 dark:text-gray-100 text-[10px] sm:text-xs font-medium rounded-full transition-colors"
                                         >
                                             <FiEye className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                                             Quick View
                                         </button>
                                         <button
-                                            onClick={(e) => {
+                                            onClick={async (e) => {
                                                 e.stopPropagation();
-                                                goToProduct(product._id);
+                                                if (!product.weights?.[0]?.stock) return;
+                                                const { addToCart } = await import("@/utils/cart.js");
+                                                await addToCart(product._id, 1, product.weights[0].weight, 0, product.weights[0].price, product.weights[0].discountPercent || 0);
+                                                window.dispatchEvent(new Event("cart-updated"));
                                             }}
+                                            title="Quick add to cart"
                                             className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors"
                                         >
                                             <FiPlus className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
@@ -149,11 +155,11 @@ export default function AllProducts() {
                             </div>
 
                             <div className="p-2.5 sm:p-3 flex flex-col items-center">
-                                <h3 className="font-semibold text-gray-800 text-xs sm:text-sm text-center truncate w-full">
+                                <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-xs sm:text-sm text-center truncate w-full">
                                     {product.firstName}
                                 </h3>
                                 {product.lastName && (
-                                    <p className="text-[11px] sm:text-xs text-gray-500 truncate text-center w-full">
+                                    <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 truncate text-center w-full">
                                         {product.lastName}
                                     </p>
                                 )}
@@ -167,13 +173,13 @@ export default function AllProducts() {
                                     {minWeight && (
                                         hasDiscount ? (
                                             <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
-                                                <p className="text-[11px] sm:text-sm text-gray-400 line-through">{symbol}{minWeight.price}</p>
+                                                <p className="text-[11px] sm:text-sm text-gray-400 dark:text-gray-500 line-through">{symbol}{minWeight.price}</p>
                                                 <p className="text-sm sm:text-base font-bold text-emerald-600">
                                                     {symbol}{(minWeight.price - (minWeight.price * minWeight.discountPercent / 100)).toFixed(0)}
                                                 </p>
                                             </div>
                                         ) : (
-                                            <p className="text-sm sm:text-base font-bold text-gray-900">{symbol}{minWeight.price}</p>
+                                            <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-gray-50">{symbol}{minWeight.price}</p>
                                         )
                                     )}
                                 </div>

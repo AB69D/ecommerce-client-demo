@@ -78,10 +78,10 @@ export default function CustomerReviews() {
 
     if (loading) {
         return (
-            <div className="w-full py-16 flex items-center justify-center bg-gray-50">
+            <div className="w-full py-16 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
                 <div className="flex flex-col items-center gap-3">
                     <div className="w-8 h-8 border-4 border-gray-300 border-t-emerald-600 rounded-full animate-spin" />
-                    <p className="text-gray-500 text-sm">Loading reviews...</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Loading reviews...</p>
                 </div>
             </div>
         );
@@ -319,6 +319,19 @@ export default function CustomerReviews() {
                     background: #059669;
                 }
  
+                .dark .rv-section { background: #0e1512; }
+                .dark .rv-heading,
+                .dark .rv-author-name { color: #f1f5f3; }
+                .dark .rv-card { background: #151b18; border-color: #232b27; }
+                .dark .rv-media-item { border-color: #232b27; }
+                .dark .rv-comment { color: #a9b4ae; }
+                .dark .rv-avatar { background: #064e3b; border-color: #065f46; color: #6ee7b7; }
+                .dark .rv-author-date { color: #71807a; }
+                .dark .rv-nav-btn { background: #151b18; border-color: #232b27; color: #a9b4ae; }
+                .dark .rv-nav-btn:hover { background: #0e2a20; border-color: #065f46; color: #6ee7b7; }
+                .dark .rv-dot-inactive { background: #2c3532; }
+                .dark .rv-dot-inactive:hover { background: #3a4441; }
+
                 @media (min-width: 640px) {
                     .rv-section { padding: 56px 24px 40px; }
                     .rv-heading { font-size: 24px; margin-bottom: 28px; }
@@ -330,7 +343,7 @@ export default function CustomerReviews() {
 
             <div className="flex flex-col items-center text-center mb-6 sm:mb-7">
                 <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--theme-accent)" }}>Testimonials</span>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight m-0">What Our Customers Say</h2>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-50 tracking-tight m-0">What Our Customers Say</h2>
                 <span className="mt-2 h-1 w-14 rounded-full" style={{ background: "linear-gradient(to right, var(--theme-primary), var(--theme-accent))" }} />
             </div>
 

@@ -25,6 +25,9 @@ import { useCurrency } from "@/context/CurrencyContext.jsx";
 import ProductReviews from "@/components/ProductReviews.jsx";
 import WishlistButton from "@/components/WishlistButton.jsx";
 import Reveal from "@/components/Reveal.jsx";
+import SocialProof from "@/components/SocialProof.jsx";
+import RecentlyViewed from "@/components/RecentlyViewed.jsx";
+import { recordView } from "@/services/recentlyViewed.js";
 import { useWhatsApp } from "@/hooks/useWhatsApp";
 
 const MINI_TRUST = [
@@ -106,6 +109,7 @@ export default function ProductClient({ productId }) {
     useEffect(() => {
         if (product?._id) {
             trackViewContent(product, { currency: code, price: product.weights?.[0]?.price });
+            recordView(product);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [product?._id]);
@@ -260,13 +264,13 @@ export default function ProductClient({ productId }) {
         return (
             <div className="w-full py-6 sm:py-8 px-4 max-w-7xl mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 animate-pulse">
-                    <div className="aspect-square bg-gray-100 rounded-2xl sm:rounded-3xl" />
+                    <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl sm:rounded-3xl" />
                     <div className="space-y-4">
-                        <div className="h-4 w-24 bg-gray-100 rounded" />
-                        <div className="h-8 w-3/4 bg-gray-100 rounded" />
-                        <div className="h-10 w-40 bg-gray-100 rounded" />
-                        <div className="h-12 w-full bg-gray-100 rounded-xl" />
-                        <div className="h-12 w-full bg-gray-100 rounded-xl" />
+                        <div className="h-4 w-24 bg-gray-100 dark:bg-gray-800 rounded" />
+                        <div className="h-8 w-3/4 bg-gray-100 dark:bg-gray-800 rounded" />
+                        <div className="h-10 w-40 bg-gray-100 dark:bg-gray-800 rounded" />
+                        <div className="h-12 w-full bg-gray-100 dark:bg-gray-800 rounded-xl" />
+                        <div className="h-12 w-full bg-gray-100 dark:bg-gray-800 rounded-xl" />
                     </div>
                 </div>
             </div>
@@ -280,10 +284,10 @@ export default function ProductClient({ productId }) {
                     <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50">
                         <FiPackage className="h-9 w-9 text-emerald-600" />
                     </div>
-                    <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
+                    <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-50">
                         Product not available
                     </h1>
-                    <p className="mt-2 text-sm sm:text-base text-gray-500">
+                    <p className="mt-2 text-sm sm:text-base text-gray-500 dark:text-gray-400">
                         This product may have been removed or is no longer sold online.
                     </p>
                     <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
@@ -296,7 +300,7 @@ export default function ProductClient({ productId }) {
                         </Link>
                         <Link
                             href="/search"
-                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
                         >
                             Browse products
                         </Link>
@@ -323,7 +327,7 @@ export default function ProductClient({ productId }) {
                         ref={galleryRef}
                         onTouchStart={handleGalleryTouchStart}
                         onTouchEnd={(e) => handleGalleryTouchEnd(e, allImages.length)}
-                        className="relative aspect-square bg-gray-100 rounded-2xl sm:rounded-3xl overflow-hidden mb-3 sm:mb-4 shadow-sm ring-1 ring-black/5 group"
+                        className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl sm:rounded-3xl overflow-hidden mb-3 sm:mb-4 shadow-sm ring-1 ring-black/5 dark:ring-white/10 group"
                     >
                         {allImages.length > 0 ? (
                             <img
@@ -336,7 +340,7 @@ export default function ProductClient({ productId }) {
                                 className="w-full h-full object-cover fade-in sm:transition-transform sm:duration-500 sm:group-hover:scale-105"
                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
                                 No Image
                             </div>
                         )}
@@ -353,19 +357,19 @@ export default function ProductClient({ productId }) {
                                     type="button"
                                     onClick={() => setSelectedImage((p) => Math.max(0, p - 1))}
                                     disabled={selectedImage === 0}
-                                    className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 items-center justify-center w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow-md opacity-0 group-hover:opacity-100 disabled:opacity-0 transition-opacity"
+                                    className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 items-center justify-center w-9 h-9 rounded-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm shadow-md opacity-0 group-hover:opacity-100 disabled:opacity-0 transition-opacity"
                                     aria-label="Previous image"
                                 >
-                                    <FiChevronLeft className="w-5 h-5 text-gray-700" />
+                                    <FiChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setSelectedImage((p) => Math.min(allImages.length - 1, p + 1))}
                                     disabled={selectedImage === allImages.length - 1}
-                                    className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center justify-center w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow-md opacity-0 group-hover:opacity-100 disabled:opacity-0 transition-opacity"
+                                    className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center justify-center w-9 h-9 rounded-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm shadow-md opacity-0 group-hover:opacity-100 disabled:opacity-0 transition-opacity"
                                     aria-label="Next image"
                                 >
-                                    <FiChevronRight className="w-5 h-5 text-gray-700" />
+                                    <FiChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-200" />
                                 </button>
 
                                 {/* Swipe dots — mobile only, mirrors the hero slider's language */}
@@ -393,7 +397,7 @@ export default function ProductClient({ productId }) {
                                     key={index}
                                     onClick={() => setSelectedImage(index)}
                                     className={`w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all ${
-                                        selectedImage === index ? 'border-emerald-600 shadow-sm' : 'border-transparent opacity-70 hover:opacity-100 hover:border-gray-300'
+                                        selectedImage === index ? 'border-emerald-600 shadow-sm' : 'border-transparent opacity-70 hover:opacity-100 hover:border-gray-300 dark:hover:border-gray-600'
                                     }`}
                                 >
                                     <img
@@ -417,11 +421,11 @@ export default function ProductClient({ productId }) {
                         </p>
                     )}
 
-                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight">
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 dark:text-gray-50 tracking-tight">
                         {product.firstName}
                     </h1>
                     {product.lastName && (
-                        <p className="text-base sm:text-lg text-gray-500 mt-1.5">
+                        <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 mt-1.5">
                             {product.lastName}
                         </p>
                     )}
@@ -433,7 +437,7 @@ export default function ProductClient({ productId }) {
                                 <p key={`d-${selectedWeight}`} className="fade-in text-3xl sm:text-4xl font-extrabold" style={{ color: "var(--theme-primary)" }}>
                                     {symbol}{unitPrice.toFixed(0)}
                                 </p>
-                                <p className="text-lg sm:text-xl text-gray-400 line-through">
+                                <p className="text-lg sm:text-xl text-gray-400 dark:text-gray-500 line-through">
                                     {symbol}{currentWeight?.price}
                                 </p>
                                 <span className="bg-red-50 text-red-600 text-xs font-bold px-2 py-1 rounded-full">
@@ -441,7 +445,7 @@ export default function ProductClient({ productId }) {
                                 </span>
                             </>
                         ) : (
-                            <p key={`p-${selectedWeight}`} className="fade-in text-3xl sm:text-4xl font-extrabold text-gray-900">
+                            <p key={`p-${selectedWeight}`} className="fade-in text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-gray-50">
                                 {symbol}{currentWeight?.price || 0}
                             </p>
                         )}
@@ -464,10 +468,12 @@ export default function ProductClient({ productId }) {
                         )}
                     </div>
 
+                    <SocialProof productId={product._id} className="mt-3" />
+
                     {/* Variant selector */}
                     {product.weights && product.weights.length > 0 && (
                         <div className="mt-6 sm:mt-7">
-                            <label className="block text-sm font-semibold text-gray-800 mb-2.5">
+                            <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2.5">
                                 Size / Weight
                             </label>
                             <div className="flex flex-wrap gap-2">
@@ -485,10 +491,10 @@ export default function ProductClient({ productId }) {
                                             }}
                                             className={`relative px-4 py-2.5 rounded-xl border text-sm font-medium transition-all active:scale-95 ${
                                                 isOut
-                                                    ? 'border-gray-200 text-gray-300 cursor-not-allowed line-through'
+                                                    ? 'border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 cursor-not-allowed line-through'
                                                     : isSelected
                                                     ? 'text-white shadow-md scale-[1.03]'
-                                                    : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                                                    : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
                                             }`}
                                             style={isSelected && !isOut ? { background: "var(--theme-primary)", borderColor: "var(--theme-primary)" } : undefined}
                                         >
@@ -502,21 +508,21 @@ export default function ProductClient({ productId }) {
 
                     {/* Quantity */}
                     <div className="mt-5 sm:mt-6 flex items-center gap-4">
-                        <span className="text-sm font-semibold text-gray-800">Quantity</span>
-                        <div className="flex items-center rounded-xl border border-gray-200 overflow-hidden">
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Quantity</span>
+                        <div className="flex items-center rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                             <button
                                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 active:bg-gray-100 transition-colors text-gray-600"
+                                className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300"
                                 aria-label="Decrease quantity"
                             >
                                 <FiMinus className="w-4 h-4" />
                             </button>
-                            <span className="w-10 text-center text-sm font-bold text-gray-900 tabular-nums">
+                            <span className="w-10 text-center text-sm font-bold text-gray-900 dark:text-gray-100 tabular-nums">
                                 {quantity}
                             </span>
                             <button
                                 onClick={() => setQuantity(Math.min(currentWeight?.stock || 10, quantity + 1))}
-                                className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 active:bg-gray-100 transition-colors text-gray-600"
+                                className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300"
                                 aria-label="Increase quantity"
                             >
                                 <FiPlus className="w-4 h-4" />
@@ -582,9 +588,9 @@ export default function ProductClient({ productId }) {
                      </div>
 
                     {/* Mini trust row */}
-                    <div className="mt-6 flex items-center justify-between gap-2 rounded-xl bg-gray-50 px-4 py-3">
+                    <div className="mt-6 flex items-center justify-between gap-2 rounded-xl bg-gray-50 dark:bg-gray-800/60 px-4 py-3">
                         {MINI_TRUST.map(({ icon: Icon, label }) => (
-                            <span key={label} className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-gray-600">
+                            <span key={label} className="flex items-center gap-1.5 text-[11px] sm:text-xs font-medium text-gray-600 dark:text-gray-300">
                                 <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: "var(--theme-primary)" }} />
                                 <span className="hidden xs:inline sm:inline">{label}</span>
                             </span>
@@ -593,10 +599,10 @@ export default function ProductClient({ productId }) {
 
                     {product.description && (
                         <div className="mt-8 sm:mt-10">
-                            <h3 className="text-lg font-bold text-gray-900 mb-2">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-50 mb-2">
                                 Description
                             </h3>
-                            <p className="text-gray-600 text-sm sm:text-base leading-relaxed whitespace-pre-line">
+                            <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base leading-relaxed whitespace-pre-line">
                                 {product.description}
                             </p>
                         </div>
@@ -604,7 +610,7 @@ export default function ProductClient({ productId }) {
 
                     {product.qa && product.qa.length > 0 && (
                          <div className="mt-8 sm:mt-10">
-                             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                             <h3 className="text-lg font-bold text-gray-900 dark:text-gray-50 mb-4 flex items-center gap-2">
                                  <FiHelpCircle className="w-5 h-5" style={{ color: "var(--theme-primary)" }} />
                                  Questions & Answers
                              </h3>
@@ -612,16 +618,16 @@ export default function ProductClient({ productId }) {
                                  {product.qa.map((item, index) => {
                                      const open = !!qaExpanded[index];
                                      return (
-                                         <div key={index} className="border border-gray-200 rounded-xl overflow-hidden">
+                                         <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
                                              <button
                                                  onClick={() => toggleQA(index)}
                                                  aria-expanded={open}
-                                                 className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                                                 className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
                                              >
-                                                 <span className="font-medium text-gray-800 text-sm sm:text-base pr-4">
+                                                 <span className="font-medium text-gray-800 dark:text-gray-100 text-sm sm:text-base pr-4">
                                                      {item.question}
                                                  </span>
-                                                 <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center text-gray-500 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}>
+                                                 <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center text-gray-500 dark:text-gray-400 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}>
                                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                                      </svg>
@@ -629,7 +635,7 @@ export default function ProductClient({ productId }) {
                                              </button>
                                              <div className={`accordion-grid ${open ? 'is-open' : ''}`}>
                                                  <div>
-                                                     <p className="p-4 bg-white border-t border-gray-200 text-gray-600 text-sm sm:text-base leading-relaxed">
+                                                     <p className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm sm:text-base leading-relaxed">
                                                          {item.answer}
                                                      </p>
                                                  </div>
@@ -643,7 +649,7 @@ export default function ProductClient({ productId }) {
 
                      {relatedProducts.length > 0 && (
                          <Reveal className="mt-10 sm:mt-12">
-                             <h3 className="text-xl font-bold text-gray-900 mb-5">You may also like</h3>
+                             <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-5">You may also like</h3>
                              {relatedLoading ? (
                                  <div className="flex items-center justify-center py-8">
                                      <div className="w-8 h-8 border-4 border-gray-300 border-t-emerald-600 rounded-full animate-spin" />
@@ -654,9 +660,9 @@ export default function ProductClient({ productId }) {
                                          <Link
                                              key={item._id}
                                              href={`/product/${item._id}`}
-                                             className="card-hover group border border-gray-100 rounded-xl overflow-hidden bg-white"
+                                             className="card-hover group border border-gray-100 dark:border-gray-800 rounded-xl overflow-hidden bg-white dark:bg-gray-900"
                                          >
-                                             <div className="aspect-square bg-gray-100 overflow-hidden">
+                                             <div className="aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden">
                                                  <img
                                                      src={item.cover_image || (item.weights?.[0]?.images?.[0]) || '/logo.png'}
                                                      alt={item.firstName}
@@ -666,9 +672,9 @@ export default function ProductClient({ productId }) {
                                                  />
                                              </div>
                                              <div className="p-3">
-                                                 <h4 className="text-sm font-medium text-gray-800 truncate">{item.firstName}</h4>
+                                                 <h4 className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{item.firstName}</h4>
                                                  {item.lastName && (
-                                                     <p className="text-xs text-gray-600 truncate">{item.lastName}</p>
+                                                     <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{item.lastName}</p>
                                                  )}
                                                  <p className="text-sm font-bold mt-1" style={{ color: "var(--theme-primary)" }}>
                                                      {symbol}{item.weights?.[0]?.price || 0}
@@ -687,17 +693,19 @@ export default function ProductClient({ productId }) {
                 <ProductReviews productId={product._id} productName={product.firstName} />
             </Reveal>
 
+            <RecentlyViewed excludeId={product._id} />
+
             {/* Sticky mobile add-to-cart bar — shows once the real CTA scrolls
                 out of view, so buying never requires scrolling back up. */}
             <div
-                className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-gray-200 px-4 py-3 shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.15)] transition-transform duration-300 ${
+                className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 px-4 py-3 shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.15)] transition-transform duration-300 ${
                     showStickyBar ? 'translate-y-0' : 'translate-y-full'
                 }`}
                 style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
             >
                 <div className="flex items-center gap-3 max-w-7xl mx-auto">
                     <div className="min-w-0">
-                        <p className="text-[11px] text-gray-500 truncate max-w-[9rem]">{product.firstName}</p>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate max-w-[9rem]">{product.firstName}</p>
                         <p className="text-lg font-extrabold" style={{ color: "var(--theme-primary)" }}>
                             {symbol}{unitPrice.toFixed(0)}
                         </p>

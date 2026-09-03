@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Class-based dark mode (Tailwind 4 CSS-first config): `dark:` utilities
+   apply whenever an ancestor carries `.dark` — toggled by ThemeToggle.jsx and
+   set pre-hydration by the inline script in layout.js to avoid a flash. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 html {
     scroll-behavior: smooth;
     /* Never allow sideways scroll on any device. `clip` (unlike `hidden`) does
@@ -147,6 +152,26 @@ h1, h2, h3, h4, p, a, span, li {
 ::selection {
     background: #d1fae5;
     color: #065f46;
+}
+
+/* Dark mode: override the admin-driven home-page wash and default text/link
+   colours the root layout paints inline. Component-level surfaces (cards,
+   panels, nav dropdowns) carry their own `dark:` utility classes instead. */
+.dark body {
+    background-image: linear-gradient(180deg, #0b0f0d, #0b0f0d 720px) !important;
+    color: #f1f5f3;
+}
+.dark ::selection {
+    background: #065f46;
+    color: #d1fae5;
+}
+@media (min-width: 768px) {
+    .dark ::-webkit-scrollbar-track {
+        background: #111827;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+        border-color: #111827;
+    }
 }
 
 /* Scroll-snap rails (category chips, swipeable galleries) */

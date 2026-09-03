@@ -6,8 +6,10 @@ import ProductCardSkeleton from "./ProductCardSkeleton";
 import { useCurrency } from "@/context/CurrencyContext.jsx";
 import ProductRating from "./ProductRating.jsx";
 import WishlistButton from "./WishlistButton.jsx";
+import { useQuickView } from "@/context/QuickViewContext.jsx";
 
 export default function TopSelling() {
+    const { open: openQuickView } = useQuickView();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -86,13 +88,13 @@ export default function TopSelling() {
         return (
             <div className="w-full py-8 px-4">
                 <div className="flex items-center justify-between mb-6 max-w-7xl mx-auto">
-                    <div className="w-9 h-9 rounded-full bg-gray-100" />
+                    <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800" />
                     <div className="flex flex-col items-center text-center px-2">
                     <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--theme-accent)" }}>Bestsellers</span>
-                    <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Top Selling</h2>
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-50 tracking-tight">Top Selling</h2>
                     <span className="mt-2 h-1 w-14 rounded-full" style={{ background: "linear-gradient(to right, var(--theme-primary), var(--theme-accent))" }} />
                 </div>
-                    <div className="w-9 h-9 rounded-full bg-gray-100" />
+                    <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800" />
                 </div>
                 <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                     {Array.from({ length: productsPerView }).map((_, i) => (
@@ -114,7 +116,7 @@ export default function TopSelling() {
     if (products.length === 0) {
         return (
             <div className="w-full py-10 flex items-center justify-center">
-                <p className="text-gray-500">No products available</p>
+                <p className="text-gray-500 dark:text-gray-400">No products available</p>
             </div>
         );
     }
@@ -127,23 +129,23 @@ export default function TopSelling() {
                 <button
                     onClick={() => scroll('left')}
                     disabled={!canScrollLeft}
-                    className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     aria-label="Scroll left"
                 >
-                    <FiArrowLeft className="w-5 h-5 text-gray-700" />
+                    <FiArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
                 </button>
                 <div className="flex flex-col items-center text-center px-2">
                     <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--theme-accent)" }}>Bestsellers</span>
-                    <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Top Selling</h2>
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-50 tracking-tight">Top Selling</h2>
                     <span className="mt-2 h-1 w-14 rounded-full" style={{ background: "linear-gradient(to right, var(--theme-primary), var(--theme-accent))" }} />
                 </div>
                 <button
                     onClick={() => scroll('right')}
                     disabled={!canScrollRight}
-                    className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     aria-label="Scroll right"
                 >
-                    <FiArrowRight className="w-5 h-5 text-gray-700" />
+                    <FiArrowRight className="w-5 h-5 text-gray-700 dark:text-gray-200" />
                 </button>
             </div>
 
@@ -160,9 +162,9 @@ export default function TopSelling() {
                                 onClick={() => goToProduct(product._id)}
                                 onMouseEnter={() => setHoveredProduct(product._id)}
                                 onMouseLeave={() => setHoveredProduct(null)}
-                                className="card-hover bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer"
+                                className="card-hover bg-white dark:bg-gray-900 rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 cursor-pointer"
                             >
-                                <div className="relative aspect-square bg-gray-100 overflow-hidden">
+                                <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden">
                                     {productImage ? (
                                         <img
                                             src={productImage}
@@ -172,7 +174,7 @@ export default function TopSelling() {
                                             className={`w-full h-full object-cover transition-transform duration-500 ${hoveredProduct === product._id ? 'scale-110' : ''}`}
                                         />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                        <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
                                             No Image
                                         </div>
                                     )}
@@ -182,18 +184,22 @@ export default function TopSelling() {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    goToProduct(product._id);
+                                                    openQuickView(product);
                                                 }}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-emerald-600 hover:text-white text-gray-800 text-xs font-medium rounded-full transition-colors"
+                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-900 hover:bg-emerald-600 hover:text-white text-gray-800 dark:text-gray-100 text-xs font-medium rounded-full transition-colors"
                                             >
                                                 <FiEye className="w-3.5 h-3.5" />
                                                 Quick View
                                             </button>
                                             <button
-                                                onClick={(e) => {
+                                                onClick={async (e) => {
                                                     e.stopPropagation();
-                                                    goToProduct(product._id);
+                                                    if (!product.weights?.[0]?.stock) return;
+                                                    const { addToCart } = await import("@/utils/cart.js");
+                                                    await addToCart(product._id, 1, product.weights[0].weight, 0, product.weights[0].price, product.weights[0].discountPercent || 0);
+                                                    window.dispatchEvent(new Event("cart-updated"));
                                                 }}
+                                                title="Quick add to cart"
                                                 className="flex items-center justify-center w-8 h-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors"
                                             >
                                                 <FiPlus className="w-4 h-4" />
@@ -211,11 +217,11 @@ export default function TopSelling() {
                                 </div>
 
                                 <div className="p-3 flex flex-col items-center">
-                                    <h3 className="font-medium text-gray-800 text-sm text-center truncate w-full">
+                                    <h3 className="font-medium text-gray-800 dark:text-gray-100 text-sm text-center truncate w-full">
                                         {product.firstName}
                                     </h3>
                                     {product.lastName && (
-                                        <p className="text-xs text-gray-500 truncate text-center w-full">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate text-center w-full">
                                             {product.lastName}
                                         </p>
                                     )}
@@ -229,13 +235,13 @@ export default function TopSelling() {
                                         {minWeight && (
                                             hasDiscount ? (
                                                 <div className="flex items-center justify-center gap-2">
-                                                    <p className="text-sm text-gray-400 line-through">{symbol}{minWeight.price}</p>
+                                                    <p className="text-sm text-gray-400 dark:text-gray-500 line-through">{symbol}{minWeight.price}</p>
                                                     <p className="text-base font-bold text-emerald-600">
                                                         {symbol}{(minWeight.price - (minWeight.price * minWeight.discountPercent / 100)).toFixed(0)}
                                                     </p>
                                                 </div>
                                             ) : (
-                                                <p className="text-base font-bold text-gray-900">{symbol}{minWeight.price}</p>
+                                                <p className="text-base font-bold text-gray-900 dark:text-gray-50">{symbol}{minWeight.price}</p>
                                             )
                                         )}
                                     </div>

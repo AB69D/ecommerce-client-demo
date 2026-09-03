@@ -49,7 +49,7 @@ export default function Showcase() {
 
     if (error) {
         return (
-            <div className="w-full h-[60vh] flex items-center justify-center bg-gray-100">
+            <div className="w-full h-[60vh] flex items-center justify-center bg-gray-100 dark:bg-gray-800">
                 <p className="text-red-500">{error}</p>
             </div>
         );
@@ -57,8 +57,8 @@ export default function Showcase() {
 
     if (headers.length === 0) {
         return (
-            <div className="w-full h-[60vh] flex items-center justify-center bg-gray-100">
-                <p className="text-gray-500">No header images available</p>
+            <div className="w-full h-[60vh] flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+                <p className="text-gray-500 dark:text-gray-400">No header images available</p>
             </div>
         );
     }
@@ -74,7 +74,7 @@ export default function Showcase() {
                         "radial-gradient(55% 60% at 18% 12%, color-mix(in srgb, var(--theme-primary) 38%, transparent), transparent 70%), radial-gradient(50% 55% at 88% 92%, color-mix(in srgb, var(--theme-accent) 32%, transparent), transparent 70%)",
                 }}
             />
-            <div className="relative w-full aspect-[16/10] sm:aspect-[2/1] lg:!h-[62vh] overflow-hidden rounded-2xl sm:rounded-3xl bg-gray-100 shadow-2xl shadow-emerald-900/15 ring-1 ring-black/5">
+            <div className="relative w-full aspect-[16/10] sm:aspect-[2/1] lg:!h-[62vh] overflow-hidden rounded-2xl sm:rounded-3xl bg-gray-100 dark:bg-gray-800 shadow-2xl shadow-emerald-900/15 ring-1 ring-black/5 dark:ring-white/10">
             <div
                 ref={sliderRef}
                 className="flex h-full transition-transform duration-700 ease-in-out"
