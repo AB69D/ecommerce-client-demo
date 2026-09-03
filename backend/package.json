@@ -7,7 +7,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js"
   },
-  "author": "Abdullah Al Fuad",
+  "author": "Md Manzurul Islam",
   "license": "ISC",
   "description": "Ab9dEcommerce backend API server",
   "engines": {
