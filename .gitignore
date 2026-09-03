@@ -44,6 +44,9 @@
 
 # Misc
 **/*.pem
+# Public license-verification key is safe to ship and must be committed —
+# it can only verify license signatures, never issue them.
+!backend/src/config/license-public-key.pem
 **/.passenger/
 **/tmp/restart.txt
 

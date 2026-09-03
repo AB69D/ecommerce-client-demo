@@ -10,6 +10,8 @@ import pinoHttp from 'pino-http';
 import { env } from './config/env.js';
 import connectDB from './config/connectDB.js';
 import { logger } from './lib/logger.js';
+import { verifyLicense } from './config/license.js';
+import { licenseGuard } from './middlewares/license.middleware.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { notFound } from './middlewares/notFound.middleware.js';
 import requireAuth from './middlewares/auth.middleware.js';
@@ -131,6 +133,8 @@ app.get('/readyz', async (_req, res) => {
     }
 });
 
+app.use(licenseGuard);
+
 app.get('/', (_req, res) =>
     res.json({ success: true, message: 'Ab9dEcommerce API', env: env.NODE_ENV }),
 );
@@ -218,6 +222,15 @@ const migrateRoles = async () => {
 
 const start = async () => {
     try {
+        const licenseState = verifyLicense();
+        if (env.NODE_ENV === 'production' && !licenseState.valid) {
+            logger.fatal({ err: licenseState.error }, 'Invalid or missing license — refusing to start in production');
+            process.exit(1);
+        }
+        // Re-verify periodically so an expiry is caught on a long-running
+        // process without needing a restart.
+        setInterval(verifyLicense, 6 * 60 * 60 * 1000).unref();
+
         await connectDB();
         await migrateRoles();
         const server = app.listen(env.PORT, () => {

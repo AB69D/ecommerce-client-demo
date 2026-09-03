@@ -18,6 +18,10 @@ const schema = z.object({
     JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
     JWT_EXPIRES_IN: z.string().default('7d'),
 
+    // Signed license token issued by the seller (see src/scripts/generate-license.js).
+    // Verified against the bundled public key in src/config/license-public-key.pem.
+    LICENSE_KEY: z.string().optional(),
+
     ADMIN_EMAILS: z
         .string()
         .default('')
@@ -47,6 +51,14 @@ const schema = z.object({
             code: z.ZodIssueCode.custom,
             path: ['FRONTEND_URL'],
             message: 'FRONTEND_URL is required when NODE_ENV=production (CORS would otherwise fail open to any origin)',
+        });
+    }
+
+    if (data.NODE_ENV === 'production' && !data.LICENSE_KEY) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['LICENSE_KEY'],
+            message: 'LICENSE_KEY is required when NODE_ENV=production',
         });
     }
 });
