@@ -33,8 +33,15 @@ export const verifyLicense = () => {
     try {
         const publicKey = fs.readFileSync(PUBLIC_KEY_PATH, 'utf8');
         const payload = jwt.verify(env.LICENSE_KEY, publicKey, { algorithms: ['RS256'] });
-        if (!payload.domain) throw new Error('license token is missing a domain claim');
-        cached = { valid: true, payload, error: null };
+        // Accept both the current `domains` array and the older single `domain`
+        // field, so tokens issued before multi-domain support still verify.
+        const domains = Array.isArray(payload.domains)
+            ? payload.domains
+            : payload.domain
+              ? [payload.domain]
+              : [];
+        if (domains.length === 0) throw new Error('license token has no domain claim');
+        cached = { valid: true, payload: { ...payload, domains }, error: null };
     } catch (err) {
         cached = { valid: false, payload: null, error: err.message };
     }
@@ -46,5 +53,6 @@ export const getLicenseState = () => cached;
 export const isDomainLicensed = (hostname) => {
     if (!cached.valid) return false;
     const normalize = (h) => String(h || '').toLowerCase().replace(/^www\./, '').replace(/:\d+$/, '');
-    return normalize(hostname) === normalize(cached.payload.domain);
+    const target = normalize(hostname);
+    return cached.payload.domains.some((d) => normalize(d) === target);
 };

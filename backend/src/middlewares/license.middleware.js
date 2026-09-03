@@ -21,7 +21,7 @@ export const licenseGuard = (req, res, next) => {
     const hostname = req.hostname;
     if (!LOCAL_HOSTS.has(hostname) && !isDomainLicensed(hostname)) {
         logger.error(
-            { hostname, licensedDomain: state.payload.domain },
+            { hostname, licensedDomains: state.payload.domains },
             'Blocked request: domain not licensed',
         );
         return res.status(503).json({ success: false, message: 'Service unavailable: domain not licensed.' });

@@ -15,6 +15,13 @@
 // Issue a license for a client:
 //   LICENSE_PRIVATE_KEY_PATH=/path/to/license-private-key.pem \
 //     node src/scripts/generate-license.js --client "Acme Ltd" --domain shop.acme.com --days 365
+//
+// A deployment usually has TWO public hostnames that need to pass the check:
+// the storefront domain traffic actually arrives on (what req.hostname sees
+// behind a Next.js rewrite/proxy) AND the backend's own hosting domain
+// (what Next.js SSR hits directly via an absolute backend URL, and what
+// webhooks/health checks call). License both, comma-separated:
+//   --domain shop.acme.com,acme-api.onrender.com
 // ---------------------------------------------------------------------------
 
 import fs from 'fs';
@@ -60,13 +67,14 @@ if (!Number.isFinite(days) || days <= 0) {
 }
 
 const privateKey = fs.readFileSync(keyPath, 'utf8');
-const normalizedDomain = domain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+const normalizeDomain = (d) => d.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+const domains = domain.split(',').map(normalizeDomain).filter(Boolean);
 
-const token = jwt.sign({ domain: normalizedDomain, client }, privateKey, {
+const token = jwt.sign({ domains, client }, privateKey, {
     algorithm: 'RS256',
     expiresIn: `${days}d`,
 });
 
-console.log(`\nLicense issued for "${client}" (${normalizedDomain}), valid ${days} days.\n`);
+console.log(`\nLicense issued for "${client}" (${domains.join(', ')}), valid ${days} days.\n`);
 console.log(`LICENSE_KEY=${token}\n`);
 console.log('Paste that line into the client\'s backend/.env (production only).');
