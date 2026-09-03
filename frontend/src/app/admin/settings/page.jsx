@@ -207,6 +207,7 @@ export default function SettingsPage() {
     const setWhatsapp = (patch) => setSettings((p) => ({ ...p, whatsapp: { ...(p.whatsapp || {}), ...patch } }));
     const setPayment = (patch) => setSettings((p) => ({ ...p, payment: { ...(p.payment || {}), ...patch } }));
     const setTheme = (patch) => setSettings((p) => ({ ...p, theme: { ...(p.theme || {}), ...patch } }));
+    const setShipping = (patch) => setSettings((p) => ({ ...p, shipping: { ...(p.shipping || {}), ...patch } }));
     const resetTheme = () => setSettings((p) => ({ ...p, theme: { ...THEME_DEFAULTS } }));
 
     const save = async () => {
@@ -277,6 +278,9 @@ export default function SettingsPage() {
                     storePassword: settings.payment?.storePassword || "",
                 },
                 theme: sanitizeTheme(settings.theme),
+                shipping: {
+                    freeDeliveryThreshold: Math.max(0, Number(settings.shipping?.freeDeliveryThreshold) || 0),
+                },
                 maintenanceMode: !!settings.maintenanceMode,
             };
             const fPayload = {
@@ -560,6 +564,19 @@ export default function SettingsPage() {
                             Preview: <span className="font-semibold text-gray-700">{settings.currencySymbol || "৳"}1,250.00</span>
                             <span className="text-gray-400"> · {(settings.currencyCode || "BDT").toUpperCase()}</span>
                         </p>
+                        <Field
+                            label="Free delivery threshold"
+                            hint="Waives the delivery charge once a cart's subtotal reaches this amount. Shown live in the storefront cart drawer's progress bar. 0 disables it — delivery is always charged by area, same as today."
+                        >
+                            <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                className={inputCls}
+                                value={settings.shipping?.freeDeliveryThreshold ?? 0}
+                                onChange={(e) => setShipping({ freeDeliveryThreshold: e.target.value })}
+                            />
+                        </Field>
                         <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
                             <Toggle label="Maintenance mode" hint="Show a maintenance notice to visitors." checked={!!settings.maintenanceMode} onChange={(v) => setS({ maintenanceMode: v })} />
                         </div>

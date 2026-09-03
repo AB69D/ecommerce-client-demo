@@ -24,7 +24,6 @@ import { getWishlist, setWishlistEnabled } from "@/services/wishlist";
 import { useCustomerAuth } from "@/context/CustomerAuthContext";
 import { useCart } from "@/context/CartContext.jsx";
 import SearchBox from "@/components/SearchBox.jsx";
-import ThemeToggle from "@/components/ThemeToggle.jsx";
 
 function Navbar() {
     const [categories, setCategories] = useState([]);
@@ -283,8 +282,6 @@ function Navbar() {
                                 <FiSearch className="w-5 h-5 sm:w-6 sm:h-6" />
                             </button>
 
-                            <ThemeToggle className="hidden md:flex p-2 opacity-90 hover:opacity-100 hover:bg-white/10 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/40" />
-
                             {/* Account — desktop hover menu (small screens use the
                                 drawer's account block instead). */}
                             <div className="relative group hidden md:block">
@@ -419,16 +416,13 @@ function Navbar() {
                                         <span className="font-bold text-emerald-800">{branding.siteName}</span>
                                     )}
                                 </Link>
-                                <div className="flex items-center gap-2">
-                                    <ThemeToggle className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-emerald-50 ring-1 ring-white/20 hover:bg-white/20 transition-all duration-200" />
-                                    <button
-                                        onClick={closeMobileMenu}
-                                        className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-emerald-50 ring-1 ring-white/20 hover:bg-amber-400 hover:text-emerald-950 hover:ring-amber-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-300"
-                                        aria-label="Close menu"
-                                    >
-                                        <FiX className="w-5 h-5" />
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={closeMobileMenu}
+                                    className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-emerald-50 ring-1 ring-white/20 hover:bg-amber-400 hover:text-emerald-950 hover:ring-amber-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                                    aria-label="Close menu"
+                                >
+                                    <FiX className="w-5 h-5" />
+                                </button>
                             </div>
 
                             <p className="relative mt-4 text-xs uppercase tracking-[0.2em] text-amber-300 font-semibold">

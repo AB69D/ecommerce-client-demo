@@ -70,7 +70,7 @@ export default function QuickViewModal() {
         if (!currentWeight) return;
         setAdding(true);
         try {
-            await addToCart(product._id, quantity, currentWeight.weight, selectedWeight, currentWeight.price, currentWeight.discountPercent || 0);
+            await addToCart(product._id, quantity, currentWeight.weight, selectedWeight, currentWeight.price, currentWeight.discountPercent || 0, product.firstName, image || product.cover_image || "");
             trackAddToCart({ productId: product._id, name: product.firstName, price: unitPrice, quantity, currency: undefined });
             window.dispatchEvent(new Event("cart-updated"));
             setAdded(true);

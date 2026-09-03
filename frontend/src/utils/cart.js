@@ -23,7 +23,7 @@ const ensureGuestId = () => {
     return null;
 };
 
-export const addToCart = async (productId, quantity = 1, weight = '', weightIndex = 0, price = 0, discountPercent = 0) => {
+export const addToCart = async (productId, quantity = 1, weight = '', weightIndex = 0, price = 0, discountPercent = 0, productName = '', productImage = '') => {
     try {
         const guestId = ensureGuestId();
         const res = await fetch(`/api/client/cart/add`, {
@@ -32,7 +32,7 @@ export const addToCart = async (productId, quantity = 1, weight = '', weightInde
                 'Content-Type': 'application/json',
                 'guest-id': guestId
             },
-            body: JSON.stringify({ productId, quantity, weight, weightIndex, price, discountPercent }),
+            body: JSON.stringify({ productId, quantity, weight, weightIndex, price, discountPercent, productName, productImage }),
             credentials: 'include'
         });
         const data = await res.json();

@@ -1,5 +1,4 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import AppChrome from "@/components/AppChrome.jsx";
 import PwaRegister from "@/components/PwaRegister.jsx";
@@ -137,12 +136,6 @@ export default async function RootLayout({ children }) {
         {/* Server-rendered theme variables — first in the body so colours are set
             before any content paints (no flash of the default palette). */}
         <style id="theme-vars" dangerouslySetInnerHTML={{ __html: themeCss(theme) }} />
-        {/* Applies the saved/OS dark-mode preference before first paint — same
-            no-flash goal as the theme-vars style tag above, for light vs dark
-            instead of brand colour. beforeInteractive runs before hydration. */}
-        <Script id="theme-init" strategy="beforeInteractive">
-          {"(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);}catch(e){}})();"}
-        </Script>
         <Analytics
           enabled={analyticsEnabled}
           gtmId={analytics.gtmId}

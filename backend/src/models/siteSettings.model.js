@@ -171,6 +171,14 @@ const siteSettingsSchema = new mongoose.Schema(
             storePassword: { type: String, default: '' },
         },
 
+        // Storefront delivery/shipping rules. `freeDeliveryThreshold` waives the
+        // delivery charge on checkout.route.js when the cart subtotal meets or
+        // exceeds it — 0 (the default) disables the waiver entirely, so an
+        // existing store's delivery pricing is unchanged until an admin opts in.
+        shipping: {
+            freeDeliveryThreshold: { type: Number, default: 0, min: 0 },
+        },
+
         maintenanceMode: { type: Boolean, default: false },
 
         // ── Third-party integrations ────────────────────────────────────────

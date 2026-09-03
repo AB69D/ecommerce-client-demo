@@ -43,14 +43,6 @@ clientOrderRouter.post('/create', optionalCustomer, screenCheckout, async (req, 
             couponCode = ''
         } = req.body;
         
-        const deliveryCharges = {
-            local: 70,
-            regional: 100,
-            international: 130
-        };
-
-        const deliveryCharge = deliveryCharges[deliveryArea] || 70;
-        
         let guestId = getGuestId(req);
 
         if (!guestId) {
@@ -70,6 +62,20 @@ clientOrderRouter.post('/create', optionalCustomer, screenCheckout, async (req, 
                 success: false
             });
         }
+
+        // Delivery charge, waived once the cart clears the admin-set free-delivery
+        // threshold (0 = disabled). Computed here, not earlier, because it needs
+        // the cart's real subtotal — never trust a client-claimed one.
+        const settings = await getSettings();
+        const deliveryCharges = {
+            local: 70,
+            regional: 100,
+            international: 130
+        };
+        const freeDeliveryThreshold = Number(settings?.shipping?.freeDeliveryThreshold) || 0;
+        const deliveryCharge = freeDeliveryThreshold > 0 && cart.totalAmount >= freeDeliveryThreshold
+            ? 0
+            : (deliveryCharges[deliveryArea] || 70);
 
         if (!customerName || !customerPhone || !shippingAddress) {
             return res.status(400).json({
@@ -93,7 +99,6 @@ clientOrderRouter.post('/create', optionalCustomer, screenCheckout, async (req, 
         const phoneE164 = normalizePhoneBD(customerPhone);
         const courierResult = await checkCourierRatio(phoneE164);
         if (courierResult) {
-            const settings = await getSettings();
             addRiskSignal(req, evaluateCourierRatio(courierResult, settings.fraudRules));
         }
 

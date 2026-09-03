@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FiEye, FiPlus } from "react-icons/fi";
+import { FiEye } from "react-icons/fi";
 import { ProductGridSkeleton } from "./ProductCardSkeleton";
 import { useCurrency } from "@/context/CurrencyContext.jsx";
 import ProductRating from "./ProductRating.jsx";
 import WishlistButton from "./WishlistButton.jsx";
+import QuickAddButton from "./QuickAddButton.jsx";
 import { useQuickView } from "@/context/QuickViewContext.jsx";
 
 export default function AllProducts() {
@@ -118,29 +119,16 @@ export default function AllProducts() {
                                 )}
 
                                 {hoveredProduct === product._id && (
-                                    <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-3 sm:pb-4 gap-2 sm:gap-3">
+                                    <div className="hidden sm:flex absolute inset-0 bg-black/40 items-end justify-center pb-3 sm:pb-4 pointer-events-none">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 openQuickView(product);
                                             }}
-                                            className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-white dark:bg-gray-900 hover:bg-emerald-600 hover:text-white text-gray-800 dark:text-gray-100 text-[10px] sm:text-xs font-medium rounded-full transition-colors"
+                                            className="pointer-events-auto flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-white dark:bg-gray-900 hover:bg-emerald-600 hover:text-white text-gray-800 dark:text-gray-100 text-[10px] sm:text-xs font-medium rounded-full transition-colors"
                                         >
                                             <FiEye className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                                             Quick View
-                                        </button>
-                                        <button
-                                            onClick={async (e) => {
-                                                e.stopPropagation();
-                                                if (!product.weights?.[0]?.stock) return;
-                                                const { addToCart } = await import("@/utils/cart.js");
-                                                await addToCart(product._id, 1, product.weights[0].weight, 0, product.weights[0].price, product.weights[0].discountPercent || 0);
-                                                window.dispatchEvent(new Event("cart-updated"));
-                                            }}
-                                            title="Quick add to cart"
-                                            className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors"
-                                        >
-                                            <FiPlus className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
                                         </button>
                                     </div>
                                 )}
@@ -152,6 +140,7 @@ export default function AllProducts() {
                                 )}
 
                                 <WishlistButton product={product} className="absolute top-2 right-2" />
+                                <QuickAddButton product={product} className="absolute bottom-2 right-2 w-7 h-7 sm:w-8 sm:h-8" />
                             </div>
 
                             <div className="p-2.5 sm:p-3 flex flex-col items-center">

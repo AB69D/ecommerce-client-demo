@@ -135,8 +135,11 @@ clientCartRouter.post('/add', async (req, res) => {
         } else {
             cart.items.push({
                 productId: productId,
-                productName: productName || '',
-                productImage: productImage || '',
+                // Fall back to the product record we already loaded above —
+                // a caller that only sends productId (no display fields)
+                // shouldn't end up with a nameless line item in the cart.
+                productName: productName || product.firstName || '',
+                productImage: productImage || product.cover_image || '',
                 quantity: qty,
                 weight: weight || '',
                 weightIndex: weightIdx,

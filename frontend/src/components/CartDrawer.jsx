@@ -1,18 +1,34 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FiX, FiShoppingBag, FiTrash2, FiTruck } from "react-icons/fi";
 import { useCart } from "@/context/CartContext.jsx";
 import { useCurrency } from "@/context/CurrencyContext.jsx";
 
-// Demo/display-only nudge — not wired to the real per-area delivery charge
-// calculated at checkout (clientOrder.route.js). Shows the pattern; hook it
-// up to a real site-settings threshold before relying on it commercially.
-const FREE_DELIVERY_THRESHOLD = 999;
-
 export default function CartDrawer() {
     const { items, count, totalAmount, drawerOpen, closeDrawer, changeQuantity, removeItem, loading } = useCart();
     const { symbol } = useCurrency();
+    // Real, admin-set value (Settings > SEO & Currency) — the exact number
+    // clientOrder.route.js uses to waive the delivery charge at checkout, so
+    // this progress bar never promises something checkout doesn't honour.
+    // 0 (unset) means the store hasn't turned the feature on.
+    const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState(0);
+
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch(`/api/client/site-settings`);
+                const data = await res.json();
+                if (!cancelled && data?.success) {
+                    setFreeDeliveryThreshold(Number(data.data?.shipping?.freeDeliveryThreshold) || 0);
+                }
+            } catch (err) {
+                console.error("Failed to fetch shipping settings", err);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
 
     useEffect(() => {
         if (!drawerOpen) return undefined;
@@ -25,8 +41,9 @@ export default function CartDrawer() {
         };
     }, [drawerOpen, closeDrawer]);
 
-    const remaining = Math.max(0, FREE_DELIVERY_THRESHOLD - totalAmount);
-    const progressPct = Math.min(100, (totalAmount / FREE_DELIVERY_THRESHOLD) * 100);
+    const freeDeliveryOn = freeDeliveryThreshold > 0;
+    const remaining = Math.max(0, freeDeliveryThreshold - totalAmount);
+    const progressPct = freeDeliveryOn ? Math.min(100, (totalAmount / freeDeliveryThreshold) * 100) : 0;
 
     return (
         <>
@@ -54,7 +71,7 @@ export default function CartDrawer() {
                     </button>
                 </div>
 
-                {totalAmount > 0 && (
+                {freeDeliveryOn && totalAmount > 0 && (
                     <div className="px-5 py-3 bg-gray-50 dark:bg-gray-800/60 border-b border-gray-100 dark:border-gray-800">
                         {remaining > 0 ? (
                             <p className="text-xs text-gray-600 dark:text-gray-300 mb-2">
