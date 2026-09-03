@@ -2,6 +2,19 @@ import Image from "next/image";
 import { fetchPage } from "@/lib/dynamicContent";
 import CmsArticle from "@/components/CmsArticle";
 
+const DEFAULT_TITLE = "Corporate Deals | Ab9dEcommerce";
+const DEFAULT_DESCRIPTION = "Corporate and bulk order options from Ab9dEcommerce.";
+
+// Reads the admin-saved SEO title/description for this page (Pages editor)
+// and falls back to the defaults above when no override is set.
+export async function generateMetadata() {
+    const page = await fetchPage("corporate-deal");
+    return {
+        title: page?.seoTitle || DEFAULT_TITLE,
+        description: page?.seoDescription || DEFAULT_DESCRIPTION,
+    };
+}
+
 export default async function CorporateDealPage() {
     const page = await fetchPage("corporate-deal");
     if (page?.body) return <CmsArticle title={page.title} html={page.body} />;

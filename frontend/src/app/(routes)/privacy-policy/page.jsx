@@ -1,18 +1,28 @@
 import { fetchPage } from "@/lib/dynamicContent";
 import CmsArticle from "@/components/CmsArticle";
 
-export const metadata = {
-    title: "Privacy Policy | Ab9dEcommerce",
-    description: "Read Ab9dEcommerce's Privacy Policy to understand how we collect, use, and protect your personal information when you use our products delivery service.",
-    keywords: "privacy policy, Ab9dEcommerce privacy, data protection, personal information, GDPR compliance ",
-    openGraph: {
-        title: "Privacy Policy - Ab9dEcommerce",
-        description: "Read Ab9dEcommerce's Privacy Policy to understand how we collect, use, and protect your personal information.",
-        url: "https://example.com/privacy-policy",
-        siteName: "Ab9dEcommerce",
-        type: "website"
-    }
-};
+const DEFAULT_TITLE = "Privacy Policy | Ab9dEcommerce";
+const DEFAULT_DESCRIPTION = "Read Ab9dEcommerce's Privacy Policy to understand how we collect, use, and protect your personal information when you use our products delivery service.";
+
+// Reads the admin-saved SEO title/description for this page (Pages editor)
+// and falls back to the built-in defaults above when no override is set.
+export async function generateMetadata() {
+    const page = await fetchPage("privacy-policy");
+    const title = page?.seoTitle || DEFAULT_TITLE;
+    const description = page?.seoDescription || DEFAULT_DESCRIPTION;
+    return {
+        title,
+        description,
+        keywords: "privacy policy, Ab9dEcommerce privacy, data protection, personal information, GDPR compliance ",
+        openGraph: {
+            title,
+            description,
+            url: "https://example.com/privacy-policy",
+            siteName: "Ab9dEcommerce",
+            type: "website"
+        }
+    };
+}
 
 export default async function PrivacyPolicyPage() {
     const page = await fetchPage("privacy-policy");

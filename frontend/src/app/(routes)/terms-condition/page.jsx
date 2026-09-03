@@ -1,18 +1,28 @@
 import { fetchPage } from "@/lib/dynamicContent";
 import CmsArticle from "@/components/CmsArticle";
 
-export const metadata = {
-    title: "Terms & Conditions | Ab9dEcommerce",
-    description: "Read the Terms & Conditions for using Ab9dEcommerce's website and services. Learn about our policies, user responsibilities, and legal agreements.",
-    keywords: "terms and conditions, Ab9dEcommerce terms, user agreement, service terms, e-commerce policy",
-    openGraph: {
-        title: "Terms & Conditions - Ab9dEcommerce",
-        description: "Read the Terms & Conditions for using Ab9dEcommerce's website and services.",
-        url: "https://example.com/terms-condition",
-        siteName: "Ab9dEcommerce",
-        type: "website"
-    }
-};
+const DEFAULT_TITLE = "Terms & Conditions | Ab9dEcommerce";
+const DEFAULT_DESCRIPTION = "Read the Terms & Conditions for using Ab9dEcommerce's website and services. Learn about our policies, user responsibilities, and legal agreements.";
+
+// Reads the admin-saved SEO title/description for this page (Pages editor)
+// and falls back to the built-in defaults above when no override is set.
+export async function generateMetadata() {
+    const page = await fetchPage("terms-condition");
+    const title = page?.seoTitle || DEFAULT_TITLE;
+    const description = page?.seoDescription || DEFAULT_DESCRIPTION;
+    return {
+        title,
+        description,
+        keywords: "terms and conditions, Ab9dEcommerce terms, user agreement, service terms, e-commerce policy",
+        openGraph: {
+            title,
+            description,
+            url: "https://example.com/terms-condition",
+            siteName: "Ab9dEcommerce",
+            type: "website"
+        }
+    };
+}
 
 export default async function TermsConditionPage() {
     const page = await fetchPage("terms-condition");

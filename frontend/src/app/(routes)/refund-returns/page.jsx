@@ -1,6 +1,19 @@
 import { fetchPage } from "@/lib/dynamicContent";
 import CmsArticle from "@/components/CmsArticle";
 
+const DEFAULT_TITLE = "Refund & Returns Policy | Ab9dEcommerce";
+const DEFAULT_DESCRIPTION = "Read Ab9dEcommerce's return and refund policy, including eligible reasons, timelines, and how to request one.";
+
+// Reads the admin-saved SEO title/description for this page (Pages editor)
+// and falls back to the defaults above when no override is set.
+export async function generateMetadata() {
+    const page = await fetchPage("refund-returns");
+    return {
+        title: page?.seoTitle || DEFAULT_TITLE,
+        description: page?.seoDescription || DEFAULT_DESCRIPTION,
+    };
+}
+
 export default async function RefundReturnsPage() {
     const page = await fetchPage("refund-returns");
     if (page?.body) return <CmsArticle title={page.title} html={page.body} />;

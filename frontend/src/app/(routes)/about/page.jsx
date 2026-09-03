@@ -1,32 +1,42 @@
 import { fetchPage } from "@/lib/dynamicContent";
 import CmsArticle from "@/components/CmsArticle";
 
-export const metadata = {
-    title: "About Ab9dEcommerce | Quality Products",
-    description: "Learn about Ab9dEcommerce - Your trusted source for our authentic products. We provide pure various products, pickles, and traditional food items directly from local farmers.",
-    keywords: "about Ab9dEcommerce, products, our authentic products, local farmers, sustainable agriculture, traditional food",
-    openGraph: {
-        title: "About Ab9dEcommerce",
-        description: "Learn about Ab9dEcommerce - Your trusted source for our authentic products.",
-        url: "https://example.com/about",
-        siteName: "Ab9dEcommerce",
-        images: [
-            {
-                url: "/logo.png",
-                width: 800,
-                height: 600,
-                alt: "Ab9dEcommerce Logo"
-            }
-        ],
-        type: "website"
-    },
-    twitter: {
-        card: "summary_large_image",
-        title: "About Ab9dEcommerce",
-        description: "Learn about Ab9dEcommerce - Your trusted source for our authentic products.",
-        images: ["/logo.png"]
-    }
-};
+const DEFAULT_TITLE = "About Ab9dEcommerce | Quality Products";
+const DEFAULT_DESCRIPTION = "Learn about Ab9dEcommerce - Your trusted source for our authentic products. We provide pure various products, pickles, and traditional food items directly from local farmers.";
+
+// Reads the admin-saved SEO title/description for this page (Pages editor)
+// and falls back to the built-in defaults above when no override is set.
+export async function generateMetadata() {
+    const page = await fetchPage("about");
+    const title = page?.seoTitle || DEFAULT_TITLE;
+    const description = page?.seoDescription || DEFAULT_DESCRIPTION;
+    return {
+        title,
+        description,
+        keywords: "about Ab9dEcommerce, products, our authentic products, local farmers, sustainable agriculture, traditional food",
+        openGraph: {
+            title,
+            description,
+            url: "https://example.com/about",
+            siteName: "Ab9dEcommerce",
+            images: [
+                {
+                    url: "/logo.png",
+                    width: 800,
+                    height: 600,
+                    alt: "Ab9dEcommerce Logo"
+                }
+            ],
+            type: "website"
+        },
+        twitter: {
+            card: "summary_large_image",
+            title,
+            description,
+            images: ["/logo.png"]
+        }
+    };
+}
 
 export default async function AboutPage() {
     const page = await fetchPage("about");
