@@ -4,8 +4,6 @@ import {
     getAdminSettings,
     updateSettings,
     uploadSettingsImage,
-    listDuplicates,
-    resolveDuplicates,
 } from '../controllers/siteSettings.controller.js';
 import { validate } from '../utils/validate.js';
 import { updateSiteSettingsSchema } from '../validations/siteSettings.schema.js';
@@ -23,9 +21,6 @@ admin.post(
     processAndUploadImages,
     uploadSettingsImage,
 );
-// TEMPORARY — remove after the duplicate 'global' docs are cleaned up.
-admin.get('/_dedupe-check', requirePermission('content:read'), listDuplicates);
-admin.post('/_dedupe-resolve', requirePermission('content:write'), resolveDuplicates);
 
 const client = Router();
 client.get('/', getPublicSettings);

@@ -84,30 +84,6 @@ export const updateSettings = asyncHandler(async (req, res) => {
     return ok(res, doc, 'Settings updated');
 });
 
-// TEMPORARY one-off maintenance routes to clean up duplicate 'global' docs
-// left behind by the getOrCreate() race fixed above. Remove once run.
-export const listDuplicates = asyncHandler(async (_req, res) => {
-    const docs = await SiteSettings.find({ key: 'global' }).lean();
-    return ok(
-        res,
-        docs.map((d) => ({
-            _id: d._id,
-            createdAt: d.createdAt,
-            updatedAt: d.updatedAt,
-            siteName: d.siteName,
-            theme: d.theme,
-        })),
-    );
-});
-
-export const resolveDuplicates = asyncHandler(async (req, res) => {
-    const { keepId } = req.body;
-    if (!keepId) throw ApiError.badRequest('keepId is required');
-    const result = await SiteSettings.deleteMany({ key: 'global', _id: { $ne: keepId } });
-    invalidateSettingsCache();
-    return ok(res, { deletedCount: result.deletedCount });
-});
-
 // POST /api/admin/site-settings/upload — upload a logo / favicon / og image.
 // The cloudinary middleware has already streamed the file and set req.file.path
 // to the hosted URL; we just hand that URL back so the form can save it.
