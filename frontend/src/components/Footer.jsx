@@ -286,7 +286,7 @@ export default function Footer() {
                                 `© ${new Date().getFullYear()} ${settings.siteName}. All rights reserved.`}
                         </p>
                         <p className="font-medium">
-                            Crafted with care · <span className="text-amber-300">Developed by Tohas Protrade</span>
+                            Crafted with care · <span className="text-amber-300">Developed by Md Manzurul Islam</span>
                         </p>
                     </div>
                 </div>
