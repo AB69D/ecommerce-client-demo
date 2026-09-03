@@ -4,10 +4,16 @@ import { ok } from '../lib/ApiResponse.js';
 import { ApiError } from '../lib/ApiError.js';
 import { invalidateSettingsCache } from '../lib/siteSettings.js';
 
+// Atomic upsert — a plain findOne-then-create here would let two concurrent
+// first-hits (e.g. admin and storefront racing right after a fresh deploy)
+// both see no document and both insert one, leaving two 'global' docs that
+// admin reads and client reads could then resolve to independently.
 const getOrCreate = async () => {
-    let doc = await SiteSettings.findOne({ key: 'global' });
-    if (!doc) doc = await SiteSettings.create({ key: 'global' });
-    return doc;
+    return SiteSettings.findOneAndUpdate(
+        { key: 'global' },
+        { $setOnInsert: { key: 'global' } },
+        { new: true, upsert: true },
+    );
 };
 
 // Flatten a nested patch into Mongo dot-paths so a partial update (e.g.
