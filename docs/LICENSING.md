@@ -44,6 +44,11 @@ LICENSE_KEY=eyJhbGciOi...
 
 `--days`-এ license-এর মেয়াদ দিন (যেমন বার্ষিক subscription হলে `365`, one-time হলে অনেক বড় সংখ্যা যেমন `36500`)।
 
+**⚠️ কোন domain দেবেন — real production incident থেকে শেখা:** `licenseGuard` middleware `req.hostname` চেক করে, যেটা backend সরাসরি যে domain-এ hit হচ্ছে সেটা না — বরং client যা দেখে সেটা। Frontend (Next.js/Vercel) যদি `/api/*` কে rewrite করে আলাদা backend hosting (Render/VPS)-এ পাঠায়, তাহলে সেই rewrite proxy `X-Forwarded-Host` হিসেবে **আসল public-facing frontend domain** পাঠায় (যেমন `shop.client.com`), backend-এর নিজের hosting domain না (যেমন `xxxx.onrender.com`)। তাই:
+- **সবসময় client-এর public-facing storefront domain-এ license issue করুন** (যেটা `FRONTEND_URL`-এ আছে সেটাই) — backend-এর হোস্টিং provider-এর URL-এ না।
+- যদি backend আলাদা কোনো subdomain-এ সরাসরি expose করা থাকে (rewrite ছাড়া, frontend সরাসরি সেই domain-এ call করে), তাহলে সেই domain-ই ঠিক।
+- সন্দেহ থাকলে: প্রথমে deploy করে একটা request পাঠান, তারপর Render/hosting-এর log-এ `"Blocked request: domain not licensed"` লাইন খুঁজুন — সেখানে `hostname` field-এ exact যে domain block হয়েছে সেটা দেখা যাবে, সেটাই আসল `--domain` value হওয়া উচিত।
+
 ## Client-এর deployment-এ যা লাগবে
 
 Client-এর `backend/.env`-এ (production-এ) এই দুইটা লাগবে:
@@ -71,5 +76,5 @@ Token-এর ভেতরের `exp` পার হয়ে গেলে server
 |---|---|
 | Production-এ boot হচ্ছে না, log-এ `LICENSE_KEY is required` | `.env`-এ `LICENSE_KEY` সেট করা হয়নি |
 | সব API `503 invalid license` দিচ্ছে | Token expire হয়ে গেছে, অথবা ভুল/করাপ্ট `LICENSE_KEY` বসানো হয়েছে |
-| সব API `503 domain not licensed` দিচ্ছে | যে domain-এ deploy করা হয়েছে সেটা token ইস্যু করার সময় দেওয়া `--domain`-এর সাথে মিলছে না |
+| সব API `503 domain not licensed` দিচ্ছে | যে domain real traffic-এ ব্যবহার হচ্ছে সেটা token-এর `--domain`-এর সাথে মিলছে না — Next.js rewrite থাকলে backend-এর নিজের hosting URL না দিয়ে public frontend domain দিয়ে license issue করেছেন কিনা check করুন (উপরের নোট দেখুন), অথবা log-এ exact `hostname` দেখে নতুন করে license issue করুন |
 | `generate-license.js` চালাতে গেলে "Private key not found" | `LICENSE_PRIVATE_KEY_PATH` ভুল অথবা key ফাইল ঐ path-এ নেই |
