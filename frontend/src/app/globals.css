@@ -148,3 +148,40 @@ h1, h2, h3, h4, p, a, span, li {
     background: #d1fae5;
     color: #065f46;
 }
+
+/* Scroll-snap rails (category chips, swipeable galleries) */
+.snap-x-mandatory-touch {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* CSS-only accordion: animates height via grid-template-rows without
+   measuring content, so Q&A panels open/close smoothly with no JS math. */
+.accordion-grid {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease;
+}
+.accordion-grid.is-open {
+    grid-template-rows: 1fr;
+}
+.accordion-grid > div {
+    overflow: hidden;
+}
+@media (prefers-reduced-motion: reduce) {
+    .accordion-grid {
+        transition: none;
+    }
+}
+
+/* Gentle looping pulse for low-stock / urgency badges */
+@keyframes soft-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+}
+.animate-soft-pulse {
+    animation: soft-pulse 1.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+    .animate-soft-pulse { animation: none; }
+}

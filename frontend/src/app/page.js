@@ -1,8 +1,11 @@
 import Showcase from "@/components/Showcase.jsx";
+import ShopByCategory from "@/components/ShopByCategory.jsx";
 import NewArrivals from "@/components/New-Arraivals.jsx";
-import AllProducts from "@/components/AllProducts.jsx";
+import TrustBadges from "@/components/TrustBadges.jsx";
 import TopSelling from "@/components/TopSelling.jsx";
+import AllProducts from "@/components/AllProducts.jsx";
 import CustomerReviews from "@/components/CustomerReviews.jsx";
+import Reveal from "@/components/Reveal.jsx";
 
 export const metadata = {
     title: "Ab9dEcommerce - Quality Products | Wide Selection",
@@ -35,7 +38,11 @@ export default function Home() {
   return (
     <div>
       <Showcase />
+      <ShopByCategory />
       <NewArrivals />
+      <Reveal>
+        <TrustBadges />
+      </Reveal>
       <TopSelling />
       <AllProducts />
       <CustomerReviews />
